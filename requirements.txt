@@ -1,0 +1,4 @@
+streamlit==1.19.0
+ladybug-comfort==0.16.23
+pathlib2==2.3.5
+lbt-ladybug==0.27.10
