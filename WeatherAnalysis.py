@@ -141,7 +141,7 @@ with st.sidebar:
 st.markdown('---')
 
 st.write("""
-# Hourly Temperature Analysis
+# Hourly Weather Data Analysis
          
 ***
 """)
@@ -187,14 +187,13 @@ with st.sidebar:
         hourly_selected = st.selectbox('Which Variable to PLOT?',options=fields.keys())
         data = global_epw.import_data_by_field(fields[hourly_selected])
         
-        min_value_low = global_epw.import_data_by_field(fields[hourly_selected]).bounds[0]
-        min_value_high = global_epw.import_data_by_field(fields[hourly_selected]).bounds[1]
-        max_value_low = global_epw.import_data_by_field(fields[hourly_selected]).bounds[0]
-        max_value_high = global_epw.import_data_by_field(fields[hourly_selected]).bounds[1]
+        min_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[0]
+        max_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[1]
+      
         
         st.markdown(':red[ Thresholds]')
-        temp_min = st.sidebar.slider('Minimum {}'.format(hourly_selected), min_value_low,min_value_high, step=None)
-        temp_max = st.sidebar.slider('Maximum {}'.format(hourly_selected), max_value_low,max_value_high, step=None)
+        temp_min = st.sidebar.slider('Minimum {}'.format(hourly_selected), min_value,max_value, step=None)
+        temp_max = st.sidebar.slider('Maximum {}'.format(hourly_selected), min_value,max_value, step=None)
     
     st.markdown('---')
         
@@ -207,9 +206,9 @@ st.header(f'{global_epw.location.city}, {global_epw.location.country}')
 st.plotly_chart(Hourly_Figure, use_container_width=True)
 
 
-# Apply Temperature Thresholds
+# Apply Thresholds
 
-st.subheader('_Applied Temperature Thresholds_')
+st.subheader('_Applied Thresholds_')
   
 data_work_hours = data.filter_by_analysis_period(AnalysisPeriod(hourly_data_st_month,hourly_data_st_day,hourly_data_st_hour,hourly_data_end_month,hourly_data_end_day,hourly_data_end_hour)).filter_by_conditional_statement('a>={} and a<={}'.format(temp_min,temp_max))
 
