@@ -188,7 +188,8 @@ with st.sidebar:
         max_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[1]
       
         
-        st.markdown(':red[ Thresholds]')
+        st.markdown(':red[#Min/Max Thresholds#]')
+        
         temp_min = st.sidebar.slider('Minimum {}'.format(hourly_selected), min_value,max_value, step=None)
         temp_max = st.sidebar.slider('Maximum {}'.format(hourly_selected), min_value,max_value, step=None)
     
