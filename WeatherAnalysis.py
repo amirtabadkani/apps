@@ -26,7 +26,7 @@ from ladybug.analysisperiod import AnalysisPeriod
 
 st.set_page_config(page_title='EPW Reader', layout='wide')
 
-st.sidebar.image('https://media.glassdoor.com/sqlm/21416/stantec-squarelogo-1559931308692.png',use_column_width='auto',output_format='PNG')
+st.sidebar.image('https://www.ceros.com/wp-content/uploads/2019/04/Stantec_Logo.png',use_column_width='auto',output_format='PNG')
 
 # Loading colorsets used in Legend Parameters
 colorsets = {
