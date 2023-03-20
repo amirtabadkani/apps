@@ -490,13 +490,12 @@ with st.sidebar:
                 
 with st.container():
 
-        st.markdown('Generate a sunpath using EPW location. Additionally, you can'
+    st.markdown('Generate a sunpath using EPW location. Additionally, you can'
                 ' also load one of the environmental variables from the EPW file'
                 ' on the sunpath.'
                 )
     
-    sunpath_figure = get_sunpath_figure(
-        sunpath_radio, global_colorset, global_epw, sunpath_switch, sunpath_data)
+    sunpath_figure = get_sunpath_figure(sunpath_radio, global_colorset, global_epw, sunpath_switch, sunpath_data)
     
     st.plotly_chart(sunpath_figure, use_container_width=True,
                     config=get_figure_config(
