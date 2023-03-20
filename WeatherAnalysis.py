@@ -116,7 +116,9 @@ with st.sidebar:
     # A dictionary of EPW variable name to its corresponding field number
     fields = get_fields()
     with st.expander('Hourly data'):
-              
+        hourly_selected = st.selectbox('Which Variable to PLOT?',options=fields.keys())
+        data = global_epw.import_data_by_field(fields[hourly_selected])
+        
         hourly_data_st_month = st.number_input(
             'Start month', min_value=1, max_value=12, value=1, key='hourly_data_st_month')
         hourly_data_end_month = st.number_input(
@@ -178,9 +180,7 @@ with st.sidebar:
     fields = get_fields()
     
     with st.container():
-        hourly_selected = st.selectbox('Which Variable to PLOT?',options=fields.keys())
-        data = global_epw.import_data_by_field(fields[hourly_selected])
-        
+               
         min_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[0]
         max_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[1]
       
