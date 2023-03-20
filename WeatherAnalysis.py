@@ -26,10 +26,7 @@ from ladybug.analysisperiod import AnalysisPeriod
 
 st.set_page_config(page_title='EPW Reader', layout='wide')
 
-# st.sidebar.image(
-#     'https://i.pinimg.com/736x/ae/e3/3e/aee33e7a06a1b2166124a501b43818bd.jpg',
-#     use_column_width=True,output_format='PNG'
-# )
+st.sidebar.image('https://forestadaptation.org/sites/default/files/2020-03/stantec-logo-vector.png',use_column_width=True,output_format='PNG')
 
 # Loading colorsets used in Legend Parameters
 colorsets = {
