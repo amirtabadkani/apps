@@ -335,8 +335,6 @@ with st.container():
 st.markdown('---')
 st.write("""
 # Wind Rose
-         
-***
 """)
 st.markdown('---')
 
