@@ -116,10 +116,7 @@ with st.sidebar:
     # A dictionary of EPW variable name to its corresponding field number
     fields = get_fields()
     with st.expander('Hourly data'):
-        hourly_selected = st.selectbox(
-            'Select an environmental variable', options=fields.keys(), key='hourly_data')
-        hourly_data = global_epw.import_data_by_field(fields[hourly_selected])
-       
+              
         hourly_data_st_month = st.number_input(
             'Start month', min_value=1, max_value=12, value=1, key='hourly_data_st_month')
         hourly_data_end_month = st.number_input(
