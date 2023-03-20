@@ -333,7 +333,11 @@ with st.container():
     st.plotly_chart(psy_chart_figure, use_container_width=True, config=get_figure_config(f'Psychrometric_chart_{global_epw.location.city}'))
 
 st.markdown('---')
-st.header('Windrose')
+st.write("""
+# Wind Rose
+         
+***
+""")
 st.markdown('---')
 
 # WINDROSE
@@ -435,6 +439,12 @@ with st.container():
 #-----------------------------------------------------------------------------
 from ladybug.sunpath import Sunpath
 
+st.write("""
+# Sunpath Diagram
+         
+***
+""")
+
 def get_sunpath_figure(sunpath_type: str, global_colorset: str, epw: EPW = None,
                        switch: bool = False,
                        data: HourlyContinuousCollection = None, ) -> Figure:
@@ -480,8 +490,7 @@ with st.sidebar:
                 
 with st.container():
 
-    st.header('Sunpath')
-    st.markdown('Generate a sunpath using EPW location. Additionally, you can'
+        st.markdown('Generate a sunpath using EPW location. Additionally, you can'
                 ' also load one of the environmental variables from the EPW file'
                 ' on the sunpath.'
                 )
