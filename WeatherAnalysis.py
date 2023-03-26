@@ -109,6 +109,7 @@ with st.sidebar:
     
     st.markdown('---')
 
+print(EPW.dry_bulb_temperature)
 
 # Hourly Plots
 #------------------------------------------------------------------------------
@@ -210,9 +211,12 @@ data_work_hours = data.filter_by_analysis_period(AnalysisPeriod(hourly_data_st_m
 Hourly_conditional_figure = get_hourly_data_figure(data_work_hours,global_colorset, hourly_data_st_month, hourly_data_st_day,
                 hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
                 hourly_data_end_hour)
-
 st.plotly_chart(Hourly_conditional_figure, use_container_width=True)
-    
+
+num_hours = len(data_work_hours)
+st.subheader("During the year, {} hour(s) have met the {} thresholds".format(num_hours,hourly_selected))
+
+   
 st.markdown('---')
 
 #Pyschometric Chart
