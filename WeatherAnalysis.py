@@ -356,22 +356,12 @@ with st.sidebar:
         windrose_end_hour = st.number_input(
             'End hour', min_value=0, max_value=23, value=23, key='windrose_end_hour')
     
-        windrose_radio = st.radio(
-            '', ['from epw location', 'Visualize DBT on the Windrose!'],
-            index=0, key='windrose_'
-        )
-    
-        if windrose_radio == 'from epw location':
-            
-            windrose_data = None
-    
-        else:
-            windrose_data = global_epw._get_data_by_field(fields['Dry Bulb Temperature'])
-            
+   
           
 # print(dir(HourlyContinuousCollection))
-def get_windrose_figure(windrose_type:str,st_month: int, st_day: int, st_hour: int, end_month: int,
+def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int,
                         end_day: int, end_hour: int, epw, global_colorset) -> Figure:
+    
     """Create windrose figure.
     Args:
         st_month: A number representing the start month.
@@ -385,47 +375,70 @@ def get_windrose_figure(windrose_type:str,st_month: int, st_day: int, st_hour: i
     Returns:
         A plotly figure.
     """
-    if windrose_type == 'from epw location':
-        
-        lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
-        wind_dir = epw.wind_direction.filter_by_analysis_period(lb_ap)
-        wind_spd = epw.wind_speed.filter_by_analysis_period(lb_ap)
-        
-        lb_lp = LegendParameters(colors=colorsets[global_colorset])
-        
-        lb_wind_rose = WindRose(wind_dir, wind_spd)
-        lb_wind_rose.legend_parameters = lb_lp
-    
-        return lb_wind_rose.plot(title='Windrose',show_title=True)
-    
-    else:
-        lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)        
-        
-        fields = get_fields()
             
-        windrose_data = global_epw.import_data_by_field(fields['Dry Bulb Temperature'])
+    lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
+    wind_dir = epw.wind_direction.filter_by_analysis_period(lb_ap)
+    wind_spd = epw.wind_speed.filter_by_analysis_period(lb_ap)
+    
+    lb_lp = LegendParameters(colors=colorsets[global_colorset])
+    
+    lb_wind_rose = WindRose(wind_dir, wind_spd)
+    lb_wind_rose.legend_parameters = lb_lp
+    
+    return lb_wind_rose.plot(title='Windrose',show_title=True)
+
+def get_windrose_figure_temp(st_month: int, st_day: int, st_hour: int, end_month: int,
+                    end_day: int, end_hour: int, epw, global_colorset) -> Figure:
+    
+    """Create windrose figure.
+    Args:
+        st_month: A number representing the start month.
+        st_day: A number representing the start day.
+        st_hour: A number representing the start hour.
+        end_month: A number representing the end month.
+        end_day: A number representing the end day.
+        end_hour: A number representing the end hour.
+        epw: An EPW object.
+        global_colorset: A string representing the name of a Colorset.
+    Returns:
+        A plotly figure.
+    """
+    
+    lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)        
+    
+    fields = get_fields()
         
-        wind_dir = epw.wind_direction.filter_by_analysis_period(lb_ap)
-        windrose_data_ = windrose_data.filter_by_analysis_period(lb_ap)
-        
-        lb_lp = LegendParameters(colors=colorsets[global_colorset])
-        
-        lb_windrose_data = WindRose(wind_dir,windrose_data_)
-        lb_windrose_data.legend_parameters = lb_lp
-        
-        return lb_windrose_data.plot(title='Wind Direction vs. Dry Bulb Temperature', show_title=True)
+    windrose_data = global_epw.import_data_by_field(fields['Dry Bulb Temperature'])
+    
+    wind_dir = epw.wind_direction.filter_by_analysis_period(lb_ap)
+    windrose_data_ = windrose_data.filter_by_analysis_period(lb_ap)
+    
+    lb_lp = LegendParameters(colors=colorsets[global_colorset])
+    
+    lb_windrose_temp = WindRose(wind_dir,windrose_data_)
+    lb_windrose_temp.legend_parameters = lb_lp
+    
+    return lb_windrose_temp.plot(title='Wind Direction vs. Dry Bulb Temperature', show_title=True)
  
 
 with st.container():
     
     st.markdown('Generate a wind rose to summarise the occurrence of winds at a location, showing their strength, direction and frequency, for the selected period and environmental parameter!')
-      
-    windrose_figure = get_windrose_figure(windrose_radio, windrose_st_month, windrose_st_day, windrose_st_hour, windrose_end_month,
-                                          windrose_end_day, windrose_end_hour, global_epw, global_colorset)
     
-    st.plotly_chart(windrose_figure, use_container_width=True,
-                    config=get_figure_config(f'Windrose_{global_epw.location.city}'))
- 
+    col1,col2 = st.columns(2)
+    with col1:
+        
+        windrose_figure = get_windrose_figure(windrose_st_month, windrose_st_day, windrose_st_hour, windrose_end_month,
+                                              windrose_end_day, windrose_end_hour, global_epw, global_colorset)
+    
+        st.plotly_chart(windrose_figure, use_container_width=True,
+                        config=get_figure_config(f'Windrose_{global_epw.location.city}'))
+    with col2:
+        windrose_figure_temp = get_windrose_figure_temp(windrose_st_month, windrose_st_day, windrose_st_hour, windrose_end_month,
+                                              windrose_end_day, windrose_end_hour, global_epw, global_colorset)
+    
+        st.plotly_chart(windrose_figure_temp, use_container_width=True,
+                        config=get_figure_config(f'Windrose_{global_epw.location.city}'))
     st.markdown('---')
 
 #SUNPATH
