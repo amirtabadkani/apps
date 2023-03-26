@@ -214,7 +214,7 @@ Hourly_conditional_figure = get_hourly_data_figure(data_work_hours,global_colors
 st.plotly_chart(Hourly_conditional_figure, use_container_width=True)
 
 num_hours = len(data_work_hours)
-st.subheader("During the year, {} hour(s) have met the {} thresholds".format(num_hours,hourly_selected))
+st.subheader("During the year, **:green[{}]** hour(s) have met the {} thresholds".format(num_hours,hourly_selected))
 
    
 st.markdown('---')
