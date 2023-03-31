@@ -260,6 +260,7 @@ def get_hourly_data_figure_conditional(hourly_data: HourlyContinuousCollection, 
     return hourly_plot.plot(title=str(hourly_data.header.data_type), show_title=True)
 
 st.subheader('_Applied Thresholds_')
+st.markdown('Please choose the thresholds from the min/max sliders on the left to plot the filtered data below:')
   
 data_work_hours = hourly_data.filter_by_analysis_period(AnalysisPeriod(hourly_data_st_month,hourly_data_st_day,hourly_data_st_hour,hourly_data_end_month,hourly_data_end_day,hourly_data_end_hour)).filter_by_conditional_statement('a>={} and a<={}'.format(temp_min,temp_max))
 
@@ -417,7 +418,6 @@ with st.sidebar:
     
    
           
-# print(dir(HourlyContinuousCollection))
 def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int,
                         end_day: int, end_hour: int, epw, global_colorset) -> Figure:
     
