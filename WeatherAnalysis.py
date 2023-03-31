@@ -60,6 +60,7 @@ colorsets = {
 }
 
 # A function to derive the color code when selected in Streamlit
+#------------------------------------------------------------------------------
 
 def get_colors(switch: bool, global_colorset: str) -> List[Color]:
     """Get switched colorset if requested.
@@ -91,6 +92,7 @@ def get_fields() -> dict:
     return {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
 
 # Uploading EPW file
+#------------------------------------------------------------------------------
 
 with st.sidebar:
     st.header('__EPW File Reader__')
@@ -109,17 +111,35 @@ with st.sidebar:
     
     st.markdown('---')
 
-print(EPW.dry_bulb_temperature)
 
 # Hourly Plots
 #------------------------------------------------------------------------------
+st.markdown('---')
+st.write("""
+# Hourly Weather Data Analysis
+         
+***
+""")
+
 with st.sidebar:
     # A dictionary of EPW variable name to its corresponding field number
+    
     fields = get_fields()
     with st.expander('Hourly data'):
-        hourly_selected = st.selectbox('Which Variable to PLOT?',options=fields.keys())
-        data = global_epw.import_data_by_field(fields[hourly_selected])
+        hourly_selected = st.selectbox('Which variable to plot?',options=fields.keys())
+        hourly_data = global_epw.import_data_by_field(fields[hourly_selected])
         
+        data_plot_radio = st.radio('How to plot the data?', ['Hourly Plot','Mean Daily Plot', 'Line Plot'], index =0, key='data_plot')
+        
+        if data_plot_radio == 'Mean Daily Plot':
+            data_final = hourly_data
+            
+        elif data_plot_radio == 'Hourly Plot':
+            data_final = hourly_data
+            
+        elif data_plot_radio == 'Line Plot':
+            data_final = hourly_data
+                
         hourly_data_st_month = st.number_input(
             'Start month', min_value=1, max_value=12, value=1, key='hourly_data_st_month')
         hourly_data_end_month = st.number_input(
@@ -134,17 +154,35 @@ with st.sidebar:
             'Start hour', min_value=0, max_value=23, value=0, key='hourly_data_st_hour')
         hourly_data_end_hour = st.number_input(
             'End hour', min_value=0, max_value=23, value=23, key='hourly_data_end_hour')
-           
-st.markdown('---')
+                   
 
-st.write("""
-# Hourly Weather Data Analysis
-         
-***
-""")
 
-def get_hourly_data_figure(
-        data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
+# Global Colorset - Choose the heatmap color
+#------------------------------------------------------------------------------
+
+with st.sidebar:
+    with st.expander('Global colorset'):
+        global_colorset = st.selectbox('', list(colorsets.keys()))
+    
+    fields = get_fields()
+    
+    with st.container():
+               
+        min_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[0]
+        max_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[1]
+      
+        
+        st.markdown(':red[**Min/Max Thresholds**]')
+        
+        temp_min = st.sidebar.slider('Minimum {}'.format(hourly_selected), min_value,max_value, step=None)
+        temp_max = st.sidebar.slider('Maximum {}'.format(hourly_selected), min_value,max_value, step=None)
+    
+    st.markdown('---')
+#------------------------------------------------------------------------------
+
+
+def get_hourly_data_figure(data_type:str,
+        hourly_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
         end_day: int, end_hour: int) -> Figure:
     """Create heatmap from hourly data.
     Args:
@@ -165,50 +203,67 @@ def get_hourly_data_figure(
     lb_lp = LegendParameters(colors=colorsets[global_colorset])
     
     lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
-    data = data.filter_by_analysis_period(lb_ap)
+    hourly_data = hourly_data.filter_by_analysis_period(lb_ap)
     
-    hourly_plot = HourlyPlot(data, legend_parameters=lb_lp)
-
-    return hourly_plot.plot(title=str(data.header.data_type), show_title=True)
-
-
-# Global Colorset - Choose the heatmap color
- 
-with st.sidebar:
-    with st.expander('Global colorset'):
-        global_colorset = st.selectbox('', list(colorsets.keys()))
+    colors = colorsets[global_colorset] 
     
-    fields = get_fields()
-    
-    with st.container():
-               
-        min_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[0]
-        max_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[1]
-      
+    if data_type == 'Hourly Plot':
         
-        st.markdown(':red[**Min/Max Thresholds**]')
-        
-        temp_min = st.sidebar.slider('Minimum {}'.format(hourly_selected), min_value,max_value, step=None)
-        temp_max = st.sidebar.slider('Maximum {}'.format(hourly_selected), min_value,max_value, step=None)
+        hourly_plot = HourlyPlot(hourly_data, legend_parameters=lb_lp)
     
-    st.markdown('---')
-        
+        return hourly_plot.plot(title=str(hourly_data.header.data_type), show_title=True)
     
-Hourly_Figure = get_hourly_data_figure(data,global_colorset, hourly_data_st_month, hourly_data_st_day,
+    elif data_type == 'Mean Daily Plot':
+        return hourly_data.diurnal_average_chart(
+            title=hourly_data.header.data_type.name, show_title=True,color=colors[-1])
+    
+    elif data_type == 'Line Plot':
+        return hourly_data.line_chart(title=hourly_data.header.data_type.name,show_title=True,color=colors[-1])
+    
+Hourly_figure = get_hourly_data_figure(data_plot_radio,data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
                 hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
                 hourly_data_end_hour)
 
 st.header(f'{global_epw.location.city}, {global_epw.location.country}')
-st.plotly_chart(Hourly_Figure, use_container_width=True)
+st.plotly_chart(Hourly_figure, use_container_width=True)
 
 
-# Apply Thresholds
+# CONDITIONAL HOURLY PLOTS
+#------------------------------------------------------------------------------
+
+def get_hourly_data_figure_conditional(hourly_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
+        end_day: int, end_hour: int) -> Figure:
+    """Create heatmap from hourly data.
+    Args:
+        data: HourlyContinuousCollection object.
+        global_colorset: A string representing the name of a Colorset.
+        conditional_statement: A string representing a conditional statement.
+        min: A string representing the lower bound of the data range.
+        max: A string representing the upper bound of the data range.
+        st_month: start month.
+        st_day: start day.
+        st_hour: start hour.
+        end_month: end month.
+        end_day: end day.
+        end_hour: end hour.
+    Returns:
+        A plotly figure.
+    """
+    lb_lp = LegendParameters(colors=colorsets[global_colorset])
+    
+    lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
+    hourly_data = hourly_data.filter_by_analysis_period(lb_ap)
+    
+           
+    hourly_plot = HourlyPlot(hourly_data, legend_parameters=lb_lp)
+
+    return hourly_plot.plot(title=str(hourly_data.header.data_type), show_title=True)
 
 st.subheader('_Applied Thresholds_')
   
-data_work_hours = data.filter_by_analysis_period(AnalysisPeriod(hourly_data_st_month,hourly_data_st_day,hourly_data_st_hour,hourly_data_end_month,hourly_data_end_day,hourly_data_end_hour)).filter_by_conditional_statement('a>={} and a<={}'.format(temp_min,temp_max))
+data_work_hours = hourly_data.filter_by_analysis_period(AnalysisPeriod(hourly_data_st_month,hourly_data_st_day,hourly_data_st_hour,hourly_data_end_month,hourly_data_end_day,hourly_data_end_hour)).filter_by_conditional_statement('a>={} and a<={}'.format(temp_min,temp_max))
 
-Hourly_conditional_figure = get_hourly_data_figure(data_work_hours,global_colorset, hourly_data_st_month, hourly_data_st_day,
+Hourly_conditional_figure = get_hourly_data_figure_conditional(data_work_hours,global_colorset, hourly_data_st_month, hourly_data_st_day,
                 hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
                 hourly_data_end_hour)
 st.plotly_chart(Hourly_conditional_figure, use_container_width=True)
@@ -479,6 +534,7 @@ def get_sunpath_figure(sunpath_type: str, global_colorset: str, epw: EPW = None,
 
 
 with st.sidebar:
+    
     with st.expander('Sunpath'):
     
         sunpath_radio = st.radio(
