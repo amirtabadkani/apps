@@ -396,10 +396,10 @@ with st.container():
     # st.image('https://github.com/psychrometrics/psychrolib/raw/master/assets/psychrolib_relationships.svg',use_column_width='True',output_format='PNG')
 
     
-    dew_pt = psy_metric.dew_point_from_db_rh(psy_db, psy_rh)
-    hr_pt = psy_metric.humid_ratio_from_db_rh(psy_db, psy_rh)
+    dew_pt = round(psy_metric.dew_point_from_db_rh(psy_db, psy_rh),2)
+    hr_pt = round(psy_metric.humid_ratio_from_db_rh(psy_db, psy_rh),2)
     wb_pt = round(psy_metric.wet_bulb_from_db_rh(psy_db, psy_rh),2)
-    ent_pt = round(psy_metric.wet_bulb_from_db_rh(psy_db, hr_pt),2)
+    ent_pt = round(psy_metric.enthalpy_from_db_hr(psy_db, hr_pt),2)
     
     col1,col2,col3,col4 = st.columns(4)
     
