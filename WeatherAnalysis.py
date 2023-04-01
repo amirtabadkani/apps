@@ -3,6 +3,8 @@
 
 # In[1]:
 
+import numpy as np
+import pandas as pd
 
 import streamlit as st
 from ladybug.epw import EPW
@@ -281,10 +283,38 @@ st.write("""
 ***
 """)
 
+import ladybug.psychrometrics as psy_metric
 from ladybug.psychchart import PsychrometricChart
 from ladybug_charts.utils import Strategy
 from ladybug_comfort.chart.polygonpmv import PolygonPMV
 
+
+with st.sidebar:
+    
+    with st.expander('Psychrometric chart'):
+    
+        fields = get_fields()
+        
+        psy_load_data = st.checkbox('Load data')
+        
+        if psy_load_data:
+            psy_selected = st.selectbox('Select an environmental variable', options=fields.keys())
+            psy_data = global_epw.import_data_by_field(fields[psy_selected])
+        else:
+            psy_data = None
+    
+        psy_draw_polygons = st.checkbox('Draw comfort polygons')
+        psy_strategy_options = ['Comfort', 'Evaporative Cooling',
+                                'Mass + Night Ventilation', 'Occupant use of fans',
+                                'Capture internal heat', 'Passive solar heating', 'All']
+        psy_selected_strategy = st.selectbox(
+            'Select a passive strategy', options=psy_strategy_options)
+        
+        st.markdown('Extracting Psychrometrics:')
+        psy_db = st.number_input('Insert DBT value')
+        psy_rh = st.number_input('Insert RH value')
+    
+    
 def get_psy_chart_figure(epw: EPW, global_colorset: str, selected_strategy: str,
                          load_data: bool, draw_polygons: bool,
                          data: HourlyContinuousCollection) -> Figure:
@@ -326,14 +356,13 @@ def get_psy_chart_figure(epw: EPW, global_colorset: str, selected_strategy: str,
     if load_data:
         if draw_polygons:
             figure = lb_psy.plot(data=data, polygon_pmv=pmv,
-                                 strategies=strategies,
-                                 solar_data=epw.direct_normal_radiation,title='PSYCHROMETRIC CHART', show_title=True)
+                                 strategies=strategies,title='PSYCHROMETRIC CHART', show_title=True)
         else:
             figure = lb_psy.plot(data=data, show_title=True)
     else:
         if draw_polygons:
             figure = lb_psy.plot(polygon_pmv=pmv, strategies=strategies,
-                                 solar_data=epw.direct_normal_radiation,title='PSYCHROMETRIC CHART', show_title=True)
+                                 title='PSYCHROMETRIC CHART', show_title=True)
         else:
             figure = lb_psy.plot(title='PSYCHROMETRIC CHART',show_title=True)
 
@@ -351,28 +380,7 @@ def get_figure_config(title: str) -> dict:
             'scale': 1  # Multiply title/legend/axis/canvas sizes by this factor
         }
     }
-
-with st.sidebar:
-    
-    with st.expander('Psychrometric chart'):
-    
-        fields = get_fields()
-        
-        psy_load_data = st.checkbox('Load data')
-        
-        if psy_load_data:
-            psy_selected = st.selectbox('Select an environmental variable', options=fields.keys())
-            psy_data = global_epw.import_data_by_field(fields[psy_selected])
-        else:
-            psy_data = None
-    
-        psy_draw_polygons = st.checkbox('Draw comfort polygons')
-        psy_strategy_options = ['Comfort', 'Evaporative Cooling',
-                                'Mass + Night Ventilation', 'Occupant use of fans',
-                                'Capture internal heat', 'Passive solar heating', 'All']
-        psy_selected_strategy = st.selectbox(
-            'Select a passive strategy', options=psy_strategy_options)
-    
+  
 with st.container():
     
     st.markdown(
@@ -383,6 +391,33 @@ with st.container():
         psy_draw_polygons, psy_data)
     
     st.plotly_chart(psy_chart_figure, use_container_width=True, config=get_figure_config(f'Psychrometric_chart_{global_epw.location.city}'))
+
+             
+    # st.image('https://github.com/psychrometrics/psychrolib/raw/master/assets/psychrolib_relationships.svg',use_column_width='True',output_format='PNG')
+
+    
+    dew_pt = psy_metric.dew_point_from_db_rh(psy_db, psy_rh)
+    hr_pt = psy_metric.humid_ratio_from_db_rh(psy_db, psy_rh)
+    wb_pt = round(psy_metric.wet_bulb_from_db_rh(psy_db, psy_rh),2)
+    ent_pt = round(psy_metric.wet_bulb_from_db_rh(psy_db, hr_pt),2)
+    
+    col1,col2,col3,col4 = st.columns(4)
+    
+    with col1:
+        
+        st.metric('Dew Point Temperature (°C)', value = dew_pt)
+        
+    with col2:
+        
+        st.metric('Humidty Ratio (kg_H₂O kg_Air⁻¹)', value = hr_pt)
+        
+    with col3:
+        
+        st.metric('Wet Bulb Temperature (°C)', value = wb_pt)
+        
+    with col4:
+        
+        st.metric('Enthalpy (J kg⁻¹)', value = ent_pt)
 
 st.markdown('---')
 st.write("""
