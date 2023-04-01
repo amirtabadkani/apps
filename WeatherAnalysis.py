@@ -130,15 +130,12 @@ with st.sidebar:
         hourly_data = global_epw.import_data_by_field(fields[hourly_selected])
         
         data_plot_radio = st.radio('How to plot the data?', ['Hourly Plot','Mean Daily Plot', 'Line Plot'], index =0, key='data_plot')
-        
-        if data_plot_radio == 'Mean Daily Plot':
-            data_final = hourly_data
+        st.markdown('*:red[Warning: Analysis Period below is ONLY applicable to the Hourly Plot!]*')
+        if (data_plot_radio == 'Mean Daily Plot') or (data_plot_radio == 'Hourly Plot') or (data_plot_radio == 'Line Plot'):
+            data_final = hourly_data        
+        else: 
+            data_final = None #Never Happens!
             
-        elif data_plot_radio == 'Hourly Plot':
-            data_final = hourly_data
-            
-        elif data_plot_radio == 'Line Plot':
-            data_final = hourly_data
                 
         hourly_data_st_month = st.number_input(
             'Start month', min_value=1, max_value=12, value=1, key='hourly_data_st_month')
