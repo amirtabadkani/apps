@@ -16,7 +16,7 @@ import plotly.graph_objects as go
 
 
 from ladybug.datacollection import HourlyContinuousCollection
-from ladybug.epw import EPW, EPWFields
+from ladybug.epw import EPWFields
 from ladybug.color import Colorset, Color
 from ladybug.legend import LegendParameters
 from ladybug.hourlyplot import HourlyPlot
@@ -112,8 +112,14 @@ with st.sidebar:
         global_epw = EPW(epw_file)
     
     st.markdown('---')
+    
+# Global Colorset - Choose the heatmap color
+#------------------------------------------------------------------------------
 
-
+with st.sidebar:
+    with st.expander('Global colorset'):
+        global_colorset = st.selectbox('', list(colorsets.keys()))
+        
 # Hourly Plots
 #------------------------------------------------------------------------------
 st.markdown('---')
@@ -154,32 +160,7 @@ with st.sidebar:
         hourly_data_end_hour = st.number_input(
             'End hour', min_value=0, max_value=23, value=23, key='hourly_data_end_hour')
                    
-
-
-# Global Colorset - Choose the heatmap color
-#------------------------------------------------------------------------------
-
-with st.sidebar:
-    with st.expander('Global colorset'):
-        global_colorset = st.selectbox('', list(colorsets.keys()))
     
-    fields = get_fields()
-    
-    with st.container():
-               
-        min_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[0]
-        max_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[1]
-      
-        
-        st.markdown(':red[**Min/Max Thresholds**]')
-        
-        temp_min = st.sidebar.slider('Minimum {}'.format(hourly_selected), min_value,max_value, step=None)
-        temp_max = st.sidebar.slider('Maximum {}'.format(hourly_selected), min_value,max_value, step=None)
-    
-    st.markdown('---')
-#------------------------------------------------------------------------------
-
-
 def get_hourly_data_figure(data_type:str,
         hourly_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
         end_day: int, end_hour: int) -> Figure:
@@ -230,6 +211,17 @@ st.plotly_chart(Hourly_figure, use_container_width=True)
 # CONDITIONAL HOURLY PLOTS
 #------------------------------------------------------------------------------
 
+with st.sidebar: 
+    with st.expander('Conditional Statement'):
+        fields = get_fields()
+        st.markdown(':red[**Min/Max Thresholds**]')
+        
+        min_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[0]
+        max_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[1]
+      
+        temp_min = st.slider('Minimum {}'.format(hourly_selected), min_value,max_value, step=None)
+        temp_max = st.slider('Maximum {}'.format(hourly_selected), min_value,max_value, step=None)
+        
 def get_hourly_data_figure_conditional(hourly_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
         end_day: int, end_hour: int) -> Figure:
     """Create heatmap from hourly data.
@@ -283,7 +275,7 @@ st.write("""
 ***
 """)
 
-import ladybug.psychrometrics as psy_metric
+import ladybug.psychrometrics
 from ladybug.psychchart import PsychrometricChart
 from ladybug_charts.utils import Strategy
 from ladybug_comfort.chart.polygonpmv import PolygonPMV
@@ -295,28 +287,27 @@ with st.sidebar:
     
         fields = get_fields()
         
-        psy_load_data = st.checkbox('Load data')
+        psy_radio = st.radio('',['Load Hourly Data', 'Extracting Psychrometrics'],index = 0, key='psy_radio')
         
-        if psy_load_data:
+        if psy_radio == 'Load Hourly Data':
             psy_selected = st.selectbox('Select an environmental variable', options=fields.keys())
             psy_data = global_epw.import_data_by_field(fields[psy_selected])
+            psy_draw_polygons = st.checkbox('Draw comfort polygons')
+            psy_strategy_options = ['Comfort', 'Evaporative Cooling',
+                                    'Mass + Night Ventilation', 'Occupant use of fans',
+                                    'Capture internal heat', 'Passive solar heating', 'All']
+            psy_selected_strategy = st.selectbox(
+                'Select a passive strategy', options=psy_strategy_options)
         else:
+            psy_selected_strategy = None
+            psy_draw_polygons = None
             psy_data = None
-    
-        psy_draw_polygons = st.checkbox('Draw comfort polygons')
-        psy_strategy_options = ['Comfort', 'Evaporative Cooling',
-                                'Mass + Night Ventilation', 'Occupant use of fans',
-                                'Capture internal heat', 'Passive solar heating', 'All']
-        psy_selected_strategy = st.selectbox(
-            'Select a passive strategy', options=psy_strategy_options)
+            psy_db = st.number_input('Insert DBT value',min_value =-20, max_value = 50, value = 24)
+            psy_rh = st.number_input('Insert RH value',min_value =0, max_value = 100, value = 45)
         
-        st.markdown('Extracting Psychrometrics:')
-        psy_db = st.number_input('Insert DBT value')
-        psy_rh = st.number_input('Insert RH value')
-    
-    
+        
 def get_psy_chart_figure(epw: EPW, global_colorset: str, selected_strategy: str,
-                         load_data: bool, draw_polygons: bool,
+                         load_data: str, draw_polygons: bool,
                          data: HourlyContinuousCollection) -> Figure:
     """Create psychrometric chart figure.
     Args:
@@ -353,20 +344,49 @@ def get_psy_chart_figure(epw: EPW, global_colorset: str, selected_strategy: str,
 
     pmv = PolygonPMV(lb_psy)
 
-    if load_data:
+    if load_data == 'Load Hourly Data':
         if draw_polygons:
             figure = lb_psy.plot(data=data, polygon_pmv=pmv,
                                  strategies=strategies,title='PSYCHROMETRIC CHART', show_title=True)
         else:
             figure = lb_psy.plot(data=data, show_title=True)
+        return figure
+    
     else:
-        if draw_polygons:
-            figure = lb_psy.plot(polygon_pmv=pmv, strategies=strategies,
-                                 title='PSYCHROMETRIC CHART', show_title=True)
-        else:
-            figure = lb_psy.plot(title='PSYCHROMETRIC CHART',show_title=True)
-
-    return figure
+      
+        lb_psy_ext = PsychrometricChart(psy_db,psy_rh)
+        figure = lb_psy_ext.plot(title='PSYCHROMETRIC CHART', show_title=True)
+        
+        dew_pt = round(ladybug.psychrometrics.dew_point_from_db_rh(psy_db, psy_rh),2)
+        hr_pt = round(ladybug.psychrometrics.humid_ratio_from_db_rh(psy_db, psy_rh),2)
+        wb_pt = round(ladybug.psychrometrics.wet_bulb_from_db_rh(psy_db, psy_rh),2)
+        ent_pt = round(ladybug.psychrometrics.enthalpy_from_db_hr(psy_db, hr_pt),2)
+        psy_db_kelvin = psy_db + 274.15
+        sat_p = round(ladybug.psychrometrics.saturated_vapor_pressure(psy_db_kelvin),2)
+        
+        col1,col2,col3,col4,col5 = st.columns(5)
+        
+        with col1:
+            
+            st.metric('Dew Point Temperature (°C)', value = dew_pt)
+            
+        with col2:
+            
+            st.metric('Humidty Ratio (kg_H₂O kg_Air⁻¹)', value = hr_pt)
+            
+        with col3:
+            
+            st.metric('Wet Bulb Temperature (°C)', value = wb_pt)
+            
+        with col4:
+            
+            st.metric('Enthalpy (J kg⁻¹)', value = ent_pt)
+            
+        with col5:
+            
+            st.metric('Saturated Vapour Pressure (Pa)', value = sat_p)
+    
+        return figure
 
 def get_figure_config(title: str) -> dict:
     """Set figure config so that a figure can be downloaded as SVG."""
@@ -387,37 +407,13 @@ with st.container():
         'A psychrometric chart can be used in two different ways. The first is done by plotting multiple data points, that represent the air conditions at a specific time, on the chart. Then, overlaying an area that identifies the “comfort zone.”  The comfort zone is defined as the range within occupants are satisfied with the surrounding thermal conditions. After plotting the air conditions and overlaying the comfort zone, it becomes possible to see how passive design strategies can extend the comfort zone.')
     
     psy_chart_figure = get_psy_chart_figure(
-        global_epw, global_colorset, psy_selected_strategy, psy_load_data,
+        global_epw, global_colorset, psy_selected_strategy, psy_radio,
         psy_draw_polygons, psy_data)
     
     st.plotly_chart(psy_chart_figure, use_container_width=True, config=get_figure_config(f'Psychrometric_chart_{global_epw.location.city}'))
 
              
     # st.image('https://github.com/psychrometrics/psychrolib/raw/master/assets/psychrolib_relationships.svg',use_column_width='True',output_format='PNG')
-
-    
-    dew_pt = round(psy_metric.dew_point_from_db_rh(psy_db, psy_rh),2)
-    hr_pt = round(psy_metric.humid_ratio_from_db_rh(psy_db, psy_rh),2)
-    wb_pt = round(psy_metric.wet_bulb_from_db_rh(psy_db, psy_rh),2)
-    ent_pt = round(psy_metric.enthalpy_from_db_hr(psy_db, hr_pt),2)
-    
-    col1,col2,col3,col4 = st.columns(4)
-    
-    with col1:
-        
-        st.metric('Dew Point Temperature (°C)', value = dew_pt)
-        
-    with col2:
-        
-        st.metric('Humidty Ratio (kg_H₂O kg_Air⁻¹)', value = hr_pt)
-        
-    with col3:
-        
-        st.metric('Wet Bulb Temperature (°C)', value = wb_pt)
-        
-    with col4:
-        
-        st.metric('Enthalpy (J kg⁻¹)', value = ent_pt)
 
 st.markdown('---')
 st.write("""
