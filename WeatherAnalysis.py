@@ -365,25 +365,33 @@ def get_psy_chart_figure(epw: EPW, global_colorset: str, selected_strategy: str,
         psy_db_kelvin = psy_db + 274.15
         sat_p = round(ladybug.psychrometrics.saturated_vapor_pressure(psy_db_kelvin),2)
         
-        col1,col2,col3,col4,col5 = st.columns(5)
+        col1,col2,col3,col4,col5,col6,col7 = st.columns(7)
         
         with col1:
             
-            st.metric('Dew Point Temperature (°C)', value = dew_pt)
+            st.metric('Dry Bulb Temperature (°C)', value = psy_db)
             
         with col2:
             
-            st.metric('Humidty Ratio (kg_H₂O kg_Air⁻¹)', value = hr_pt)
+            st.metric('Relative Humidity (%)', value = psy_rh)
             
         with col3:
             
-            st.metric('Wet Bulb Temperature (°C)', value = wb_pt)
+            st.metric('Dew Point Temperature (°C)', value = dew_pt)
             
         with col4:
             
-            st.metric('Enthalpy (J kg⁻¹)', value = ent_pt)
+            st.metric('Humidty Ratio (kg_H₂O kg_Air⁻¹)', value = hr_pt)
             
         with col5:
+            
+            st.metric('Wet Bulb Temperature (°C)', value = wb_pt)
+            
+        with col6:
+            
+            st.metric('Enthalpy (J kg⁻¹)', value = ent_pt)
+            
+        with col7:
             
             st.metric('Saturated Vapour Pressure (Pa)', value = sat_p)
     
