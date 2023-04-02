@@ -29,6 +29,7 @@ st.set_page_config(page_title='EPW File Reader', layout='wide')
 with st.sidebar:
     st.header('__EPW File Reader__')
     st.markdown('_Developed by **Amir Tabadkani**, \nPh.D. Computational Design Lead, Sustainability @STANTEC_')
+    st.write('Source codes: Ladybug Tools Core SDK Documentation')
 #st.sidebar.image('https://www.ceros.com/wp-content/uploads/2019/04/Stantec_Logo.png',use_column_width='auto',output_format='PNG')
 
 # Loading colorsets used in Legend Parameters
