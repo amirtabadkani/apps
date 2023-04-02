@@ -24,8 +24,6 @@ from ladybug.monthlychart import MonthlyChart
 from ladybug.analysisperiod import AnalysisPeriod
 
 
-
-
 st.set_page_config(page_title='EPW File Reader', layout='wide')
 
 with st.sidebar:
@@ -263,7 +261,7 @@ Hourly_conditional_figure = get_hourly_data_figure_conditional(data_work_hours,g
 st.plotly_chart(Hourly_conditional_figure, use_container_width=True)
 
 num_hours = len(data_work_hours)
-st.subheader("During the year, **:green[{}]** hour(s) have met the {} thresholds".format(num_hours,hourly_selected))
+st.metric(':blue[**Number of hours meeting the {} thresholds:**]'.format(hourly_selected), value = num_hours)
 
    
 st.markdown('---')
