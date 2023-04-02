@@ -220,8 +220,8 @@ with st.sidebar:
         min_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[0]
         max_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[1]
       
-        temp_min = st.slider('Minimum {}'.format(hourly_selected), min_value,max_value, step=None)
-        temp_max = st.slider('Maximum {}'.format(hourly_selected), min_value,max_value, step=None)
+        temp_min = st.slider('Minimum {}'.format(hourly_selected), min_value, max_value, value = ((max_value+min_value)/4),  step=None)
+        temp_max = st.slider('Maximum {}'.format(hourly_selected), min_value,max_value,value =((max_value+min_value)/2),  step=None)
         
 def get_hourly_data_figure_conditional(hourly_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
         end_day: int, end_hour: int) -> Figure:
