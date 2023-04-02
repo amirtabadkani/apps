@@ -11,7 +11,7 @@ from ladybug.epw import EPW
 import pathlib
 from plotly.graph_objects import Figure
 from plotly.subplots import make_subplots
-from typing import List
+from typing import List, Tuple
 import plotly.graph_objects as go
 
 
@@ -595,3 +595,82 @@ with st.container():
     st.plotly_chart(sunpath_figure, use_container_width=True,
                     config=get_figure_config(
                         f'Sunpath_{global_epw.location.city}'))
+
+#Degree Days
+#------------------------------------------------------------------------------
+
+
+from ladybug.datatype.temperaturetime import HeatingDegreeTime, CoolingDegreeTime
+from ladybug_comfort.degreetime import heating_degree_time, cooling_degree_time
+
+with st.sidebar:
+    with st.expander('Degree days'):
+    
+          
+        degree_days_heat_base = st.number_input('Base heating temperature',
+                                                value=18)
+
+    
+        degree_days_cool_base = st.number_input('Base cooling temperature',
+                                                value=23)
+
+def get_degree_days_figure(
+    dbt: HourlyContinuousCollection, _heat_base_: int, _cool_base_: int,
+    global_colorset: str) -> Tuple[Figure,HourlyContinuousCollection,HourlyContinuousCollection]:
+    """Create HDD and CDD figure.
+    Args:
+        dbt: A HourlyContinuousCollection object.
+        _heat_base_: A number representing the heat base temperature.
+        _cool_base_: A number representing the cool base temperature.
+        stack: A boolean to indicate whether to stack the data.
+        switch: A boolean to indicate whether to reverse the colorset.
+        global_colorset: A string representing the name of a Colorset.
+    Returns:
+        A tuple of three items:
+        -   A plotly figure.
+        -   Heating degree days as a HourlyContinuousCollection.
+        -   Cooling degree days as a HourlyContinuousCollection.
+    """
+
+    hourly_heat = HourlyContinuousCollection.compute_function_aligned(
+        heating_degree_time, [dbt, _heat_base_],
+        HeatingDegreeTime(), 'degC-hours')
+    hourly_heat.convert_to_unit('degC-days')
+
+    hourly_cool = HourlyContinuousCollection.compute_function_aligned(
+        cooling_degree_time, [dbt, _cool_base_],
+        CoolingDegreeTime(), 'degC-hours')
+    hourly_cool.convert_to_unit('degC-days')
+
+    colors = colorsets[global_colorset]
+
+    lb_lp = LegendParameters(colors=colors)
+    monthly_chart = MonthlyChart([hourly_cool.total_monthly(),
+                                  hourly_heat.total_monthly()], legend_parameters=lb_lp)
+
+    return monthly_chart.plot(title='Degree Days'), hourly_heat, hourly_cool
+
+with st.container():
+    st.markdown('---')
+    st.header('Degree Days')
+    st.markdown('---')
+    st.markdown('Calculates heating and cooling degree-days.'
+                ' Traditionally, degree-days are defined as the difference between'
+                ' a base temperature and the average ambient air temperature'
+                ' multiplied by the number of days that this difference exists.'
+                ' by default, the base heating temperature and base cooling'
+                ' degree temperatures are set to 18C and 23C respectively.'
+                ' Which means, it is assumed that below the heating base temperature'
+                ' heating will be deployed and above the cooling base temperature'
+                ' cooling will be deployed.')
+
+    degree_days_figure, hourly_heat, hourly_cool = get_degree_days_figure(
+        global_epw.dry_bulb_temperature, degree_days_heat_base,
+        degree_days_cool_base,global_colorset)
+
+    st.plotly_chart(degree_days_figure, use_container_width=True,
+                    config=get_figure_config(
+                        f'Degree days_{global_epw.location.city}'))
+    st.markdown(
+        f':blue[**Total Cooling degree days are {round(hourly_cool.total)}**]'
+        f' **AND** :red[**total heating degree days {round(hourly_heat.total)}**].')
