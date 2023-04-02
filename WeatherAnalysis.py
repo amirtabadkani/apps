@@ -662,15 +662,22 @@ with st.container():
     st.markdown('---')
     st.header('Degree Days')
     st.markdown('---')
-    st.markdown('Calculates heating and cooling degree-days.'
-                ' Traditionally, degree-days are defined as the difference between'
-                ' a base temperature and the average ambient air temperature'
-                ' multiplied by the number of days that this difference exists.'
-                ' by default, the base heating temperature and base cooling'
-                ' degree temperatures are set to 18C and 23C respectively.'
-                ' Which means, it is assumed that below the heating base temperature'
-                ' heating will be deployed and above the cooling base temperature'
-                ' cooling will be deployed.')
+    st.markdown('**Degree days** is another way of combining time and temperature, but it has different implications for heating and cooling than does design temperature.')
+                
+    st.markdown('**Heating degree days (HDD)** – This is the number that tells you' 
+                'how long a location stays below a special temperature called the base'
+                'temperature. I find it easiest to start with degree hours.'
+                'For example, the most commonly used base temperature for heating is 18°C.'
+                'So if the temperature at your house is 12° F for one hour, you just'
+                'accumulated 6 degree hours. If the temperature is 15°C for the next hour'
+                ',you’ve got another 3 degree hours and 9 degree hours total.'
+                'To find the number of degree days, you divide it by 24,'
+                ' so you’ve got one degree day in this example.'
+                'You can do that for every hour of the year to find the total and then divide by 24.'
+                ' Or you can use the average temperature for each day to get degree days directly.')
+    st.markdown('**Cooling degree days (CDD)** – Same principle as for heating degree days but usually'
+                'with a different base temperature which is here set as 24°C by default.') 
+                
 
     degree_days_figure, hourly_heat, hourly_cool = get_degree_days_figure(
         global_epw.dry_bulb_temperature, degree_days_heat_base,
