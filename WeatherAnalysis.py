@@ -26,11 +26,15 @@ from ladybug.analysisperiod import AnalysisPeriod
 
 
 
-st.set_page_config(page_title='EPW Reader', layout='wide')
+st.set_page_config(page_title='EPW File Reader', layout='wide')
 
+with st.sidebar:
+    st.header('__EPW File Reader__')
+    st.markdown('_Developed by **Amir Tabadkani**, \nPh.D. Computational Design Lead, Sustainability @STANTEC_')
 #st.sidebar.image('https://www.ceros.com/wp-content/uploads/2019/04/Stantec_Logo.png',use_column_width='auto',output_format='PNG')
 
 # Loading colorsets used in Legend Parameters
+#---------------------------------------------------------------------------------
 colorsets = {
     'original': Colorset.original(),
     'nuanced': Colorset.nuanced(),
@@ -97,8 +101,6 @@ def get_fields() -> dict:
 #------------------------------------------------------------------------------
 
 with st.sidebar:
-    st.header('__EPW File Reader__')
-    st.markdown('_Designed by **Amir Tabadkani**_')
     # epw file #####################################################################
     with st.expander('Upload EPW file'):
         epw_data = st.file_uploader('', type='epw')
