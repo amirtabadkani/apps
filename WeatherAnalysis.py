@@ -26,10 +26,8 @@ from ladybug.analysisperiod import AnalysisPeriod
 
 st.set_page_config(page_title='EPW File Reader', layout='wide')
 
-st.write("""
-# Download the .epw File: https://www.ladybug.tools/epwmap/ 
-**
-""")
+st.markdown('**Download the .epw File:** https://www.ladybug.tools/epwmap/')
+
 
 with st.container():
     st.image('https://1731290220-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FZbSo9tzMwlZsIB61RpcZ%2Fuploads%2FbKSSyj7avm80wP7Ymqew%2FEPW%20Map.png?alt=media&token=517fc466-a693-4007-98a8-c35c6a97f8f6')
