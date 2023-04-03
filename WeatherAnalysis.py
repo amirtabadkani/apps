@@ -27,8 +27,7 @@ from ladybug.analysisperiod import AnalysisPeriod
 st.set_page_config(page_title='EPW File Reader', layout='wide')
 
 st.write("""
-# DOWNLOAD THE WEATHER FILE IN .EPW FORMAT FROM THE PAGE BELOW: 
-https://www.ladybug.tools/epwmap/ 
+# Download the .epw File From: https://www.ladybug.tools/epwmap/ 
 ***
 """)
 
