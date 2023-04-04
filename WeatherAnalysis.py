@@ -696,9 +696,9 @@ with st.container():
                         f'Degree days_{global_epw.location.city}'))
     col1, col2  = st.columns(2)
     with col1:
-        st.metric(':blue[**TOTOAL COOLING DEGREE DAYS**]', value = round(hourly_cool.total/24))
+        st.metric(':blue[**TOTOAL COOLING DEGREE HOURS**]', value = round(hourly_cool.total))
     with col2:
-        st.metric(':red[**TOTAL HEATING DEGREE DAYS**]', value = round(hourly_heat.total/24))
+        st.metric(':red[**TOTAL HEATING DEGREE HOURS**]', value = round(hourly_heat.total))
 
 
 #Distributed DBT Plot
