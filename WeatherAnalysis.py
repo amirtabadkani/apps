@@ -5,6 +5,7 @@
 
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 import streamlit as st
 from ladybug.epw import EPW
@@ -693,6 +694,33 @@ with st.container():
     st.plotly_chart(degree_days_figure, use_container_width=True,
                     config=get_figure_config(
                         f'Degree days_{global_epw.location.city}'))
-    st.markdown(
-        f':blue[**Total Cooling degree days are {round(hourly_cool.total)}**]'
-        f' **AND** :red[**total heating degree days {round(hourly_heat.total)}**].')
+    col1, col2  = st.columns(2)
+    with col1:
+        st.metric(':blue[**TOTOAL COOLING DEGREE DAYS**]', value = round(hourly_cool.total/24))
+    with col2:
+        st.metric(':red[**TOTAL HEATING DEGREE DAYS**]', value = round(hourly_heat.total/24))
+
+
+#Distributed DBT Plot
+#------------------------------------------------------------------------------
+import plotly.express as px
+
+with st.container():
+    
+    st.markdown('---')
+    st.header('Distributed Temperature Plot')
+    st.markdown('---')
+    
+    dbt = global_epw.dry_bulb_temperature
+        
+    db_df = pd.DataFrame(list(dbt.values), columns = ['Dry Bulb Temperature'])
+    
+    bins = [0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40]
+    names = ['0-2°C','2-4°C','4-6°C','6-8°C','8-10°C','10-12°C','12-14°C','14-16°C','16-18°C','18-20°C','20-22°C','22-24°C','24-26°C','26-28°C','28-30°C','30-32°C','32-34°C','34-36°C','36-38°C','38-40°C']
+    db_df['Temperature Range'] = pd.cut(db_df['Dry Bulb Temperature'], bins, labels = names)
+    db_df = db_df.groupby('Temperature Range').count()
+    
+    fig = px.bar(db_df)
+    fig = fig.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
+    
+    st.plotly_chart(fig, use_container_width=True)
