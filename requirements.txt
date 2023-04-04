@@ -4,3 +4,4 @@ ladybug-pandas>=0.4.0
 ladybug-charts>=1.17.1
 icrawler>=0.6.6
 geopy>=2.2.0
+seaborn>=0.11.1
