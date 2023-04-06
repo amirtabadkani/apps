@@ -137,7 +137,7 @@ with st.sidebar:
     # A dictionary of EPW variable name to its corresponding field number
     
     fields = get_fields()
-    with st.expander('Hourly data'):
+    with st.expander('Periodic analysis'):
         hourly_selected = st.selectbox('Which variable to plot?',options=fields.keys())
         wea_data = global_epw.import_data_by_field(fields[hourly_selected])
         var_unit = wea_data.header._unit
@@ -259,7 +259,7 @@ ave_val = round(mean(wea_data._values),2)
 #------------------------------------------------------------------------------
 
 with st.sidebar: 
-    with st.expander('Conditional Statement'):
+    with st.expander('Conditional statement'):
         fields = get_fields()
         st.markdown(':red[**Min/Max Thresholds**]')
         
@@ -784,3 +784,4 @@ with st.container():
     fig = fig.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
     
     st.plotly_chart(fig, use_container_width=True)
+
