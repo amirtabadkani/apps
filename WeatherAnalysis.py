@@ -3,17 +3,14 @@
 
 # In[1]:
 
-import numpy as np
 import pandas as pd
-import seaborn as sns
 
 import streamlit as st
 from ladybug.epw import EPW
 import pathlib
 from plotly.graph_objects import Figure
-from plotly.subplots import make_subplots
 from typing import List, Tuple
-import plotly.graph_objects as go
+
 
 
 from ladybug.datacollection import HourlyContinuousCollection
@@ -25,7 +22,7 @@ from ladybug.monthlychart import MonthlyChart
 from ladybug.analysisperiod import AnalysisPeriod
 
 
-st.set_page_config(page_title='EPW File Reader', layout='wide')
+st.set_page_config(page_title='EPW Vizualiser', layout='wide')
 
 st.markdown('**Download the .epw File:** https://www.ladybug.tools/epwmap/')
 
@@ -92,9 +89,7 @@ def get_colors(switch: bool, global_colorset: str) -> List[Color]:
     return colors
 
 # Define a function to extract the epw variable from the class
-# Example:
-# print(dir(EPWFields))
-# EPWFields._fields[7]['name'].name
+#------------------------------------------------------------------------------
 
 def epw_hash_func(epw: EPW) -> str:
     """Function to help streamlit hash an EPW object."""
@@ -133,7 +128,7 @@ with st.sidebar:
 #------------------------------------------------------------------------------
 st.markdown('---')
 st.write("""
-# Hourly Weather Data Analysis
+# Periodic Weather Data Analysis
          
 ***
 """)
@@ -144,34 +139,56 @@ with st.sidebar:
     fields = get_fields()
     with st.expander('Hourly data'):
         hourly_selected = st.selectbox('Which variable to plot?',options=fields.keys())
-        hourly_data = global_epw.import_data_by_field(fields[hourly_selected])
-        
+        wea_data = global_epw.import_data_by_field(fields[hourly_selected])
+        var_unit = wea_data.header._unit
+                  
         data_plot_radio = st.radio('How to plot the data?', ['Hourly Plot','Mean Daily Plot', 'Line Plot'], index =0, key='data_plot')
-        st.markdown('*:red[Warning: Analysis Period below is ONLY applicable to the Hourly Plot!]*')
-        if (data_plot_radio == 'Mean Daily Plot') or (data_plot_radio == 'Hourly Plot') or (data_plot_radio == 'Line Plot'):
-            data_final = hourly_data        
-        else: 
-            data_final = None #Never Happens!
+        
+        if (data_plot_radio == 'Hourly Plot'):
             
-                
-        hourly_data_st_month = st.number_input(
+            data_final = wea_data
+            
+            hourly_data_st_month = st.number_input(
             'Start month', min_value=1, max_value=12, value=1, key='hourly_data_st_month')
-        hourly_data_end_month = st.number_input(
-            'End month', min_value=1, max_value=12, value=12, key='hourly_data_end_month')
+            hourly_data_end_month = st.number_input(
+                'End month', min_value=1, max_value=12, value=12, key='hourly_data_end_month')
+    
+            hourly_data_st_day = st.number_input(
+                'Start day', min_value=1, max_value=31, value=1, key='hourly_data_st_day')
+            hourly_data_end_day = st.number_input(
+                'End day', min_value=1, max_value=31, value=31, key='hourly_data_end_day')
+    
+            hourly_data_st_hour = st.number_input(
+                'Start hour', min_value=0, max_value=23, value=0, key='hourly_data_st_hour')
+            hourly_data_end_hour = st.number_input(
+                'End hour', min_value=0, max_value=23, value=23, key='hourly_data_end_hour')
+            
+        elif (data_plot_radio == 'Mean Daily Plot'):
+            
+            data_final = wea_data
+            
+            hourly_data_st_month = None
+            hourly_data_end_month = None
+            hourly_data_st_day = None
+            hourly_data_end_day = None
+            hourly_data_st_hour = None
+            hourly_data_end_hour = None            
+            
+        elif (data_plot_radio == 'Line Plot'): 
+            
+            data_final = wea_data
+            
+            hourly_data_st_month = None
+            hourly_data_end_month = None
+            hourly_data_st_day = None
+            hourly_data_end_day = None
+            hourly_data_st_hour = None
+            hourly_data_end_hour = None
+            
 
-        hourly_data_st_day = st.number_input(
-            'Start day', min_value=1, max_value=31, value=1, key='hourly_data_st_day')
-        hourly_data_end_day = st.number_input(
-            'End day', min_value=1, max_value=31, value=31, key='hourly_data_end_day')
-
-        hourly_data_st_hour = st.number_input(
-            'Start hour', min_value=0, max_value=23, value=0, key='hourly_data_st_hour')
-        hourly_data_end_hour = st.number_input(
-            'End hour', min_value=0, max_value=23, value=23, key='hourly_data_end_hour')
-                   
     
 def get_hourly_data_figure(data_type:str,
-        hourly_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
+        wea_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
         end_day: int, end_hour: int) -> Figure:
     """Create heatmap from hourly data.
     Args:
@@ -192,22 +209,22 @@ def get_hourly_data_figure(data_type:str,
     lb_lp = LegendParameters(colors=colorsets[global_colorset])
     
     lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
-    hourly_data = hourly_data.filter_by_analysis_period(lb_ap)
+    hourly_data = wea_data.filter_by_analysis_period(lb_ap)
     
     colors = colorsets[global_colorset] 
     
     if data_type == 'Hourly Plot':
         
         hourly_plot = HourlyPlot(hourly_data, legend_parameters=lb_lp)
-    
+        
         return hourly_plot.plot(title=str(hourly_data.header.data_type), show_title=True)
     
     elif data_type == 'Mean Daily Plot':
-        return hourly_data.diurnal_average_chart(
+        return wea_data.diurnal_average_chart(
             title=hourly_data.header.data_type.name, show_title=True,color=colors[-1])
     
     elif data_type == 'Line Plot':
-        return hourly_data.line_chart(title=hourly_data.header.data_type.name,show_title=True,color=colors[-1])
+        return wea_data.line_chart(title=hourly_data.header.data_type.name,show_title=True,color=colors[-1])
     
 Hourly_figure = get_hourly_data_figure(data_plot_radio,data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
                 hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
@@ -215,6 +232,27 @@ Hourly_figure = get_hourly_data_figure(data_plot_radio,data_final,global_colorse
 
 st.header(f'{global_epw.location.city}, {global_epw.location.country}')
 st.plotly_chart(Hourly_figure, use_container_width=True)
+
+#Saving images
+
+Hourly_figure_image = get_hourly_data_figure('Hourly Plot',data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
+                hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
+                hourly_data_end_hour)
+Daily_figure_image = get_hourly_data_figure('Mean Daily Plot',data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
+                hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
+                hourly_data_end_hour)
+Line_figure_image = get_hourly_data_figure('Line Plot',data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
+                hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
+                hourly_data_end_hour)
+
+Hourly_figure_image.write_image("hourly_data.png")
+Daily_figure_image.write_image("Daily_data.png")
+Line_figure_image.write_image("Line_data.png")
+
+
+#statistics
+from statistics import mean
+ave_val = round(mean(wea_data._values),2)
 
 
 # CONDITIONAL HOURLY PLOTS
@@ -225,11 +263,11 @@ with st.sidebar:
         fields = get_fields()
         st.markdown(':red[**Min/Max Thresholds**]')
         
-        min_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[0]
-        max_value = global_epw.import_data_by_field(fields[hourly_selected]).bounds[1]
+        min_value = wea_data.bounds[0]
+        max_value = wea_data.bounds[1]
       
-        temp_min = st.slider('Minimum {}'.format(hourly_selected), min_value, max_value, value = ((max_value+min_value)/4),  step=None)
-        temp_max = st.slider('Maximum {}'.format(hourly_selected), min_value,max_value,value =((max_value+min_value)/2),  step=None)
+        temp_min = st.slider('Minimum {}'.format(hourly_selected), min_value, max_value,  step=None)
+        temp_max = st.slider('Maximum {}'.format(hourly_selected), min_value, max_value, value = max_value-(min_value)*2, step=None)
         
 def get_hourly_data_figure_conditional(hourly_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
         end_day: int, end_hour: int) -> Figure:
@@ -261,17 +299,29 @@ def get_hourly_data_figure_conditional(hourly_data: HourlyContinuousCollection, 
 
 st.subheader('_Applied Thresholds_')
 st.markdown('Please choose the thresholds from the min/max sliders on the left to plot the filtered data below:')
-  
-data_work_hours = hourly_data.filter_by_analysis_period(AnalysisPeriod(hourly_data_st_month,hourly_data_st_day,hourly_data_st_hour,hourly_data_end_month,hourly_data_end_day,hourly_data_end_hour)).filter_by_conditional_statement('a>={} and a<={}'.format(temp_min,temp_max))
 
-Hourly_conditional_figure = get_hourly_data_figure_conditional(data_work_hours,global_colorset, hourly_data_st_month, hourly_data_st_day,
-                hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
-                hourly_data_end_hour)
-st.plotly_chart(Hourly_conditional_figure, use_container_width=True)
+with st.container():
+    
+    filtered_hourly_data= wea_data.filter_by_analysis_period(AnalysisPeriod(hourly_data_st_month,hourly_data_st_day,hourly_data_st_hour,hourly_data_end_month,hourly_data_end_day,hourly_data_end_hour))
+    
+    data_work_hours = filtered_hourly_data.filter_by_conditional_statement('a>={} and a<={}'.format(temp_min,temp_max))
+    
+    Hourly_conditional_figure = get_hourly_data_figure_conditional(data_work_hours,global_colorset, hourly_data_st_month, hourly_data_st_day,
+                    hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
+                    hourly_data_end_hour)
+    st.plotly_chart(Hourly_conditional_figure, use_container_width=True)
+    
+    
+    met_num_hours = len(data_work_hours)
+    unmet_num_hours = len(filtered_hourly_data)-len(data_work_hours)
+    
+    col1,col2 = st.columns(2)
+    with col1:
+        st.metric(':blue[**Met hours for the selected {} thresholds:**]'.format(hourly_selected), value = met_num_hours)
+    with col2:
+        st.metric(':red[**Unmet hours for the selected {} thresholds:**]'.format(hourly_selected), value = unmet_num_hours)
 
-num_hours = len(data_work_hours)
-st.metric(':blue[**Number of hours meeting the {} thresholds:**]'.format(hourly_selected), value = num_hours)
-
+Hourly_conditional_figure.write_image("conditional_hourly_data.png")
    
 st.markdown('---')
 
@@ -285,6 +335,7 @@ st.write("""
 """)
 
 import ladybug.psychrometrics
+import ladybug_comfort
 from ladybug.psychchart import PsychrometricChart
 from ladybug_charts.utils import Strategy
 from ladybug_comfort.chart.polygonpmv import PolygonPMV
@@ -296,12 +347,15 @@ with st.sidebar:
     
         fields = get_fields()
         
+
         psy_radio = st.radio('',['Load Hourly Data', 'Extracting Psychrometrics'],index = 0, key='psy_radio')
         
         if psy_radio == 'Load Hourly Data':
             psy_selected = st.selectbox('Select an environmental variable', options=fields.keys())
             psy_data = global_epw.import_data_by_field(fields[psy_selected])
             psy_draw_polygons = st.checkbox('Draw comfort polygons')
+            psy_clo_value = st.number_input('Clothing Level',value=1.1)
+            psy_met_value = st.number_input('Metabloic Rate',value=0.7)
             psy_strategy_options = ['Comfort', 'Evaporative Cooling',
                                     'Mass + Night Ventilation', 'Occupant use of fans',
                                     'Capture internal heat', 'Passive solar heating', 'All']
@@ -311,6 +365,8 @@ with st.sidebar:
             psy_selected_strategy = None
             psy_draw_polygons = None
             psy_data = None
+            psy_clo_value = None
+            psy_met_value = None
             psy_db = st.number_input('Insert DBT value',min_value =-20, max_value = 50, value = 24)
             psy_rh = st.number_input('Insert RH value',min_value =0, max_value = 100, value = 45)
         
@@ -350,11 +406,15 @@ def get_psy_chart_figure(epw: EPW, global_colorset: str, selected_strategy: str,
         strategies = [Strategy.capture_internal_heat]
     elif selected_strategy == 'Passive solar heating':
         strategies = [Strategy.passive_solar_heating]
-
-    pmv = PolygonPMV(lb_psy)
-
+        
+    pmv_param = ladybug_comfort.parameter.pmv.PMVParameter(20,humid_ratio_upper = 0.08, humid_ratio_lower=0.00)
+    
     if load_data == 'Load Hourly Data':
+        
+        pmv = PolygonPMV(lb_psy,met_rate=[psy_met_value],clo_value=[psy_clo_value],comfort_parameter = pmv_param )
+    
         if draw_polygons:
+            
             figure = lb_psy.plot(data=data, polygon_pmv=pmv,
                                  strategies=strategies,title='PSYCHROMETRIC CHART', show_title=True)
         else:
@@ -425,7 +485,7 @@ with st.container():
     
     psy_chart_figure = get_psy_chart_figure(
         global_epw, global_colorset, psy_selected_strategy, psy_radio,
-        psy_draw_polygons, psy_data)
+        psy_draw_polygons,psy_data)
     
     st.plotly_chart(psy_chart_figure, use_container_width=True, config=get_figure_config(f'Psychrometric_chart_{global_epw.location.city}'))
 
@@ -684,7 +744,7 @@ with st.container():
                 'You can do that for every hour of the year to find the total and then divide by 24.'
                 ' Or you can use the average temperature for each day to get degree days directly.')
     st.markdown('**Cooling degree days (CDD)** – Same principle as for heating degree days but usually'
-                'with a different base temperature which is here set as 24°C by default.') 
+                'with a different base temperature which is here set as 23°C by default.') 
                 
 
     degree_days_figure, hourly_heat, hourly_cool = get_degree_days_figure(
@@ -699,6 +759,7 @@ with st.container():
         st.metric(':blue[**TOTOAL COOLING DEGREE HOURS**]', value = round(hourly_cool.total))
     with col2:
         st.metric(':red[**TOTAL HEATING DEGREE HOURS**]', value = round(hourly_heat.total))
+
 
 #Distributed DBT Plot
 #------------------------------------------------------------------------------
@@ -723,4 +784,3 @@ with st.container():
     fig = fig.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
     
     st.plotly_chart(fig, use_container_width=True)
-
