@@ -22,6 +22,12 @@ from ladybug.hourlyplot import HourlyPlot
 from ladybug.monthlychart import MonthlyChart
 from ladybug.analysisperiod import AnalysisPeriod
 
+import ladybug.psychrometrics
+import ladybug_comfort
+from ladybug.psychchart import PsychrometricChart
+from ladybug_charts.utils import Strategy
+from ladybug_comfort.chart.polygonpmv import PolygonPMV
+
 
 st.set_page_config(page_title='EPW Vizualiser Toolkit', layout='wide')
 
@@ -333,12 +339,6 @@ st.write("""
          
 ***
 """)
-
-import ladybug.psychrometrics
-import ladybug_comfort
-from ladybug.psychchart import PsychrometricChart
-from ladybug_charts.utils import Strategy
-from ladybug_comfort.chart.polygonpmv import PolygonPMV
 
 
 with st.sidebar:
