@@ -22,7 +22,7 @@ from ladybug.monthlychart import MonthlyChart
 from ladybug.analysisperiod import AnalysisPeriod
 
 
-st.set_page_config(page_title='EPW Vizualiser', layout='wide')
+st.set_page_config(page_title='EPW Vizualiser Toolkit', layout='wide')
 
 st.subheader('**Download the .epw File from the map**')
 
@@ -264,8 +264,8 @@ with st.sidebar:
         min_value = _wea_data.bounds[0]
         max_value = _wea_data.bounds[1]
       
-        temp_min = st.slider('Minimum {}'.format(hourly_selected), min_value, max_value,  step=None)
-        temp_max = st.slider('Maximum {}'.format(hourly_selected), min_value, max_value, value = max_value-(min_value)*2, step=None)
+        threshold_min = st.slider('Minimum {}'.format(hourly_selected), min_value, max_value, value = min_value, step=None)
+        threshold_max = st.slider('Maximum {}'.format(hourly_selected), min_value, max_value, value = max_value, step=None)
         
 @st.cache_data(ttl=2)
 def get_hourly_data_figure_conditional(_hourly_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
@@ -303,7 +303,7 @@ with st.container():
     
     filtered_hourly_data= _wea_data.filter_by_analysis_period(AnalysisPeriod(hourly_data_st_month,hourly_data_st_day,hourly_data_st_hour,hourly_data_end_month,hourly_data_end_day,hourly_data_end_hour))
     
-    data_work_hours = filtered_hourly_data.filter_by_conditional_statement('a>={} and a<={}'.format(temp_min,temp_max))
+    data_work_hours = filtered_hourly_data.filter_by_conditional_statement('a>={} and a<={}'.format(threshold_min,threshold_max))
     
     Hourly_conditional_figure = get_hourly_data_figure_conditional(data_work_hours,global_colorset, hourly_data_st_month, hourly_data_st_day,
                     hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
