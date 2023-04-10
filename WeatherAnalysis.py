@@ -24,15 +24,16 @@ from ladybug.analysisperiod import AnalysisPeriod
 
 st.set_page_config(page_title='EPW Vizualiser', layout='wide')
 
-st.markdown('**Download the .epw File:** https://www.ladybug.tools/epwmap/')
+st.subheader('**Download the .epw File from the map**')
 
 
 with st.container():
-    st.image('https://1731290220-files.gitbook.io/~/files/v0/b/gitbook-x-prod.appspot.com/o/spaces%2FZbSo9tzMwlZsIB61RpcZ%2Fuploads%2FbKSSyj7avm80wP7Ymqew%2FEPW%20Map.png?alt=media&token=517fc466-a693-4007-98a8-c35c6a97f8f6')
     
-    
+    st.components.v1.iframe("https://www.ladybug.tools/epwmap/", height = 800)
+
+
 with st.sidebar:
-    st.header('__EPW File Reader__')
+    st.header('__EPW Visualiser Toolkit__')
     st.markdown('_Developed by **Amir Tabadkani**, \nPh.D. Computational Design Lead, Sustainability_')
     st.write('Source codes: Ladybug Tools Core SDK Documentation')
 #st.sidebar.image('https://www.ceros.com/wp-content/uploads/2019/04/Stantec_Logo.png',use_column_width='auto',output_format='PNG')
@@ -785,3 +786,4 @@ with st.container():
     fig = fig.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
     
     st.plotly_chart(fig, use_container_width=True)
+
