@@ -772,7 +772,7 @@ import plotly.express as px
     
 with st.sidebar:
     
-    with st.expander('Tamperature Range Settings'):
+    with st.expander('Temperature Range Settings'):
     
         min_val = st.number_input("Minimum Value", min_value = -20, max_value = 0, value = 0)
         max_val = st.number_input("Maximum Value", min_value = 20, max_value = 60, value = 40)
@@ -807,3 +807,6 @@ with st.container():
     fig = fig.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
     
     st.plotly_chart(fig, use_container_width=True)
+
+
+
