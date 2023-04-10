@@ -792,7 +792,7 @@ with st.container():
     @st.cache_data(ttl=2)
     def get_ranges():
         ranges = []
-        for i in range(0,(len(bins)-1)):
+        for i in range(0,(len(bins))):
             x = str(f'{bins[i]}-{bins[i]+steps}°C')
             ranges.append(x)
         return ranges
