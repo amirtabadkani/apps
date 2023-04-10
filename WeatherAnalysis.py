@@ -4,6 +4,7 @@
 # In[1]:
 
 import pandas as pd
+import numpy as np
 
 import streamlit as st
 from ladybug.epw import EPW
@@ -73,7 +74,7 @@ colorsets = {
 # A function to derive the color code when selected in Streamlit
 #------------------------------------------------------------------------------
 
-@st.cache_data
+@st.cache_data(ttl=2)
 def get_colors(switch: bool, global_colorset: str) -> List[Color]:
     """Get switched colorset if requested.
     Args:
@@ -92,7 +93,7 @@ def get_colors(switch: bool, global_colorset: str) -> List[Color]:
 
 # Define a function to extract the epw variable from the class
 #------------------------------------------------------------------------------
-@st.cache_data
+@st.cache_data(ttl=2)
 def get_fields() -> dict:
     # A dictionary of EPW variable name to its corresponding field number
     return {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
@@ -774,16 +775,28 @@ with st.container():
     st.markdown('---')
     
     dbt = global_epw.dry_bulb_temperature
-        
+     
     db_df = pd.DataFrame(list(dbt.values), columns = ['Dry Bulb Temperature'])
     
-    bins = [0,2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40]
-    names = ['0-2°C','2-4°C','4-6°C','6-8°C','8-10°C','10-12°C','12-14°C','14-16°C','16-18°C','18-20°C','20-22°C','22-24°C','24-26°C','26-28°C','28-30°C','30-32°C','32-34°C','34-36°C','36-38°C','38-40°C']
-    db_df['Temperature Range'] = pd.cut(db_df['Dry Bulb Temperature'], bins, labels = names)
+    bins = list(np.arange(0,41,2))
+    
+    
+    def get_ranges():
+        ranges = []
+        for i in range(0,(len(bins)-1)):
+            x = str(f'{bins[i]}-{bins[i]+2}°C')
+            ranges.append(x)
+        return ranges
+    
+    ranges_str = get_ranges()
+    
+    db_df['Temperature Range'] = pd.cut(db_df['Dry Bulb Temperature'], bins, labels = ranges_str)
     db_df = db_df.groupby('Temperature Range').count()
     
     fig = px.bar(db_df)
     fig = fig.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
     
     st.plotly_chart(fig, use_container_width=True)
+
+
 
