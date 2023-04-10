@@ -768,6 +768,16 @@ with st.container():
 #------------------------------------------------------------------------------
 import plotly.express as px
 
+
+    
+with st.sidebar:
+    
+    with st.expander('Tamperature Range Settings'):
+    
+        min_val = st.number_input("Minimum Value", min_value = -20, max_value = 0, value = 0)
+        max_val = st.number_input("Maximum Value", min_value = 20, max_value = 60, value = 40)
+        steps = st.slider("Number of Steps", min_value = 1, max_value = 5, value = 2)
+
 with st.container():
     
     st.markdown('---')
@@ -778,13 +788,13 @@ with st.container():
      
     db_df = pd.DataFrame(list(dbt.values), columns = ['Dry Bulb Temperature'])
     
-    bins = list(np.arange(0,41,2))
+    bins = list(np.arange(min_val,max_val,steps))
     
-    
+    @st.cache_data(ttl=2)
     def get_ranges():
         ranges = []
         for i in range(0,(len(bins)-1)):
-            x = str(f'{bins[i]}-{bins[i]+2}°C')
+            x = str(f'{bins[i]}-{bins[i]+steps}°C')
             ranges.append(x)
         return ranges
     
@@ -797,6 +807,3 @@ with st.container():
     fig = fig.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
     
     st.plotly_chart(fig, use_container_width=True)
-
-
-
