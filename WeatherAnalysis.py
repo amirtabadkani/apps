@@ -72,6 +72,7 @@ colorsets = {
 # A function to derive the color code when selected in Streamlit
 #------------------------------------------------------------------------------
 
+@st.cache_data
 def get_colors(switch: bool, global_colorset: str) -> List[Color]:
     """Get switched colorset if requested.
     Args:
@@ -90,11 +91,7 @@ def get_colors(switch: bool, global_colorset: str) -> List[Color]:
 
 # Define a function to extract the epw variable from the class
 #------------------------------------------------------------------------------
-
-def epw_hash_func(epw: EPW) -> str:
-    """Function to help streamlit hash an EPW object."""
-    return epw.location.city
-
+@st.cache_data
 def get_fields() -> dict:
     # A dictionary of EPW variable name to its corresponding field number
     return {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
@@ -139,14 +136,14 @@ with st.sidebar:
     fields = get_fields()
     with st.expander('Periodic analysis'):
         hourly_selected = st.selectbox('Which variable to plot?',options=fields.keys())
-        wea_data = global_epw.import_data_by_field(fields[hourly_selected])
-        var_unit = wea_data.header._unit
+        _wea_data = global_epw.import_data_by_field(fields[hourly_selected])
+        var_unit = _wea_data.header._unit
                   
         data_plot_radio = st.radio('How to plot the data?', ['Hourly Plot','Mean Daily Plot', 'Line Plot'], index =0, key='data_plot')
         
         if (data_plot_radio == 'Hourly Plot'):
             
-            data_final = wea_data
+            data_final = _wea_data
             
             hourly_data_st_month = st.number_input(
             'Start month', min_value=1, max_value=12, value=1, key='hourly_data_st_month')
@@ -165,7 +162,7 @@ with st.sidebar:
             
         elif (data_plot_radio == 'Mean Daily Plot'):
             
-            data_final = wea_data
+            data_final = _wea_data
             
             hourly_data_st_month = None
             hourly_data_end_month = None
@@ -176,7 +173,7 @@ with st.sidebar:
             
         elif (data_plot_radio == 'Line Plot'): 
             
-            data_final = wea_data
+            data_final = _wea_data
             
             hourly_data_st_month = None
             hourly_data_end_month = None
@@ -186,9 +183,9 @@ with st.sidebar:
             hourly_data_end_hour = None
             
 
-    
+@st.cache_data(ttl=2)
 def get_hourly_data_figure(data_type:str,
-        wea_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
+        _wea_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
         end_day: int, end_hour: int) -> Figure:
     """Create heatmap from hourly data.
     Args:
@@ -209,22 +206,22 @@ def get_hourly_data_figure(data_type:str,
     lb_lp = LegendParameters(colors=colorsets[global_colorset])
     
     lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
-    hourly_data = wea_data.filter_by_analysis_period(lb_ap)
+    
     
     colors = colorsets[global_colorset] 
     
     if data_type == 'Hourly Plot':
-        
+        hourly_data = _wea_data.filter_by_analysis_period(lb_ap)
         hourly_plot = HourlyPlot(hourly_data, legend_parameters=lb_lp)
         
-        return hourly_plot.plot(title=str(hourly_data.header.data_type), show_title=True)
+        return hourly_plot.plot(title=str(_wea_data.header.data_type), show_title=True)
     
     elif data_type == 'Mean Daily Plot':
-        return wea_data.diurnal_average_chart(
-            title=hourly_data.header.data_type.name, show_title=True,color=colors[-1])
+        return _wea_data.diurnal_average_chart(
+            title=_wea_data.header.data_type.name, show_title=True,color=colors[-1])
     
     elif data_type == 'Line Plot':
-        return wea_data.line_chart(title=hourly_data.header.data_type.name,show_title=True,color=colors[-1])
+        return _wea_data.line_chart(title=_wea_data.header.data_type.name,show_title=True,color=colors[-1])
     
 Hourly_figure = get_hourly_data_figure(data_plot_radio,data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
                 hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
@@ -252,7 +249,7 @@ Line_figure_image.write_image("Line_data.png")
 
 #statistics
 from statistics import mean
-ave_val = round(mean(wea_data._values),2)
+ave_val = round(mean(_wea_data._values),2)
 
 
 # CONDITIONAL HOURLY PLOTS
@@ -263,13 +260,14 @@ with st.sidebar:
         fields = get_fields()
         st.markdown(':red[**Min/Max Thresholds**]')
         
-        min_value = wea_data.bounds[0]
-        max_value = wea_data.bounds[1]
+        min_value = _wea_data.bounds[0]
+        max_value = _wea_data.bounds[1]
       
         temp_min = st.slider('Minimum {}'.format(hourly_selected), min_value, max_value,  step=None)
         temp_max = st.slider('Maximum {}'.format(hourly_selected), min_value, max_value, value = max_value-(min_value)*2, step=None)
         
-def get_hourly_data_figure_conditional(hourly_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
+@st.cache_data(ttl=2)
+def get_hourly_data_figure_conditional(_hourly_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
         end_day: int, end_hour: int) -> Figure:
     """Create heatmap from hourly data.
     Args:
@@ -290,19 +288,19 @@ def get_hourly_data_figure_conditional(hourly_data: HourlyContinuousCollection, 
     lb_lp = LegendParameters(colors=colorsets[global_colorset])
     
     lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
-    hourly_data = hourly_data.filter_by_analysis_period(lb_ap)
+    _hourly_data = _hourly_data.filter_by_analysis_period(lb_ap)
     
            
-    hourly_plot = HourlyPlot(hourly_data, legend_parameters=lb_lp)
+    hourly_plot = HourlyPlot(_hourly_data, legend_parameters=lb_lp)
 
-    return hourly_plot.plot(title=str(hourly_data.header.data_type), show_title=True)
+    return hourly_plot.plot(title=str(_hourly_data.header.data_type), show_title=True)
 
 st.subheader('_Applied Thresholds_')
 st.markdown('Please choose the thresholds from the min/max sliders on the left to plot the filtered data below:')
 
 with st.container():
     
-    filtered_hourly_data= wea_data.filter_by_analysis_period(AnalysisPeriod(hourly_data_st_month,hourly_data_st_day,hourly_data_st_hour,hourly_data_end_month,hourly_data_end_day,hourly_data_end_hour))
+    filtered_hourly_data= _wea_data.filter_by_analysis_period(AnalysisPeriod(hourly_data_st_month,hourly_data_st_day,hourly_data_st_hour,hourly_data_end_month,hourly_data_end_day,hourly_data_end_hour))
     
     data_work_hours = filtered_hourly_data.filter_by_conditional_statement('a>={} and a<={}'.format(temp_min,temp_max))
     
@@ -370,10 +368,10 @@ with st.sidebar:
             psy_db = st.number_input('Insert DBT value',min_value =-20, max_value = 50, value = 24)
             psy_rh = st.number_input('Insert RH value',min_value =0, max_value = 100, value = 45)
         
-        
-def get_psy_chart_figure(epw: EPW, global_colorset: str, selected_strategy: str,
+@st.cache_data(ttl=2)
+def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str,
                          load_data: str, draw_polygons: bool,
-                         data: HourlyContinuousCollection) -> Figure:
+                         _data: HourlyContinuousCollection) -> Figure:
     """Create psychrometric chart figure.
     Args:
         epw: An EPW object.
@@ -387,8 +385,8 @@ def get_psy_chart_figure(epw: EPW, global_colorset: str, selected_strategy: str,
     """
 
     lb_lp = LegendParameters(colors=colorsets[global_colorset])
-    lb_psy = PsychrometricChart(epw.dry_bulb_temperature,
-                                epw.relative_humidity, legend_parameters=lb_lp)
+    lb_psy = PsychrometricChart(_epw.dry_bulb_temperature,
+                                _epw.relative_humidity, legend_parameters=lb_lp)
 
     if selected_strategy == 'All':
         strategies = [Strategy.comfort, Strategy.evaporative_cooling,
@@ -415,10 +413,10 @@ def get_psy_chart_figure(epw: EPW, global_colorset: str, selected_strategy: str,
     
         if draw_polygons:
             
-            figure = lb_psy.plot(data=data, polygon_pmv=pmv,
+            figure = lb_psy.plot(data=_data, polygon_pmv=pmv,
                                  strategies=strategies,title='PSYCHROMETRIC CHART', show_title=True)
         else:
-            figure = lb_psy.plot(data=data, show_title=True)
+            figure = lb_psy.plot(data=_data, show_title=True)
         return figure
     
     else:
@@ -465,6 +463,7 @@ def get_psy_chart_figure(epw: EPW, global_colorset: str, selected_strategy: str,
     
         return figure
 
+@st.cache_data(ttl=2)
 def get_figure_config(title: str) -> dict:
     """Set figure config so that a figure can be downloaded as SVG."""
 
@@ -522,9 +521,9 @@ with st.sidebar:
             'End hour', min_value=0, max_value=23, value=23, key='windrose_end_hour')
     
    
-          
+@st.cache_data(ttl=2)
 def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int,
-                        end_day: int, end_hour: int, epw, global_colorset) -> Figure:
+                        end_day: int, end_hour: int, _epw, global_colorset) -> Figure:
     
     """Create windrose figure.
     Args:
@@ -541,8 +540,8 @@ def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int
     """
             
     lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
-    wind_dir = epw.wind_direction.filter_by_analysis_period(lb_ap)
-    wind_spd = epw.wind_speed.filter_by_analysis_period(lb_ap)
+    wind_dir = _epw.wind_direction.filter_by_analysis_period(lb_ap)
+    wind_spd = _epw.wind_speed.filter_by_analysis_period(lb_ap)
     
     lb_lp = LegendParameters(colors=colorsets[global_colorset])
     
@@ -551,8 +550,9 @@ def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int
     
     return lb_wind_rose.plot(title='Windrose',show_title=True)
 
+@st.cache_data(ttl=2)
 def get_windrose_figure_temp(st_month: int, st_day: int, st_hour: int, end_month: int,
-                    end_day: int, end_hour: int, epw, global_colorset) -> Figure:
+                    end_day: int, end_hour: int, _epw, global_colorset) -> Figure:
     
     """Create windrose figure.
     Args:
@@ -574,7 +574,7 @@ def get_windrose_figure_temp(st_month: int, st_day: int, st_hour: int, end_month
         
     windrose_data = global_epw.import_data_by_field(fields['Dry Bulb Temperature'])
     
-    wind_dir = epw.wind_direction.filter_by_analysis_period(lb_ap)
+    wind_dir = _epw.wind_direction.filter_by_analysis_period(lb_ap)
     windrose_data_ = windrose_data.filter_by_analysis_period(lb_ap)
     
     lb_lp = LegendParameters(colors=colorsets[global_colorset])
@@ -615,9 +615,10 @@ st.write("""
 ***
 """)
 
-def get_sunpath_figure(sunpath_type: str, global_colorset: str, epw: EPW = None,
+@st.cache_data(ttl=2)
+def get_sunpath_figure(sunpath_type: str, global_colorset: str, _epw: EPW = None,
                        switch: bool = False,
-                       data: HourlyContinuousCollection = None, ) -> Figure:
+                       _data: HourlyContinuousCollection = None, ) -> Figure:
     """Create sunpath figure.
     Args:
         sunpath_type: A string representing the type of sunpath to be plotted.
@@ -629,13 +630,13 @@ def get_sunpath_figure(sunpath_type: str, global_colorset: str, epw: EPW = None,
         A plotly figure.
     """
     if sunpath_type == 'from epw location':
-        lb_sunpath = Sunpath.from_location(epw.location)
+        lb_sunpath = Sunpath.from_location(_epw.location)
         colors = get_colors(switch, global_colorset)
         return lb_sunpath.plot(title='Sunpath Diagram',colorset=colors,show_title=True)
     else:
-        lb_sunpath = Sunpath.from_location(epw.location)
+        lb_sunpath = Sunpath.from_location(_epw.location)
         colors = colorsets[global_colorset]
-        return lb_sunpath.plot(title=str(data.header.data_type),colorset=colors, data=data, show_title=True)
+        return lb_sunpath.plot(title=str(_data.header.data_type),colorset=colors, data=_data, show_title=True)
 
 
 with st.sidebar:
@@ -689,9 +690,9 @@ with st.sidebar:
     
         degree_days_cool_base = st.number_input('Base cooling temperature',
                                                 value=23)
-
+@st.cache_data(ttl=2)
 def get_degree_days_figure(
-    dbt: HourlyContinuousCollection, _heat_base_: int, _cool_base_: int,
+    _dbt: HourlyContinuousCollection, _heat_base_: int, _cool_base_: int,
     global_colorset: str) -> Tuple[Figure,HourlyContinuousCollection,HourlyContinuousCollection]:
     """Create HDD and CDD figure.
     Args:
@@ -709,12 +710,12 @@ def get_degree_days_figure(
     """
 
     hourly_heat = HourlyContinuousCollection.compute_function_aligned(
-        heating_degree_time, [dbt, _heat_base_],
+        heating_degree_time, [_dbt, _heat_base_],
         HeatingDegreeTime(), 'degC-hours')
     hourly_heat.convert_to_unit('degC-days')
 
     hourly_cool = HourlyContinuousCollection.compute_function_aligned(
-        cooling_degree_time, [dbt, _cool_base_],
+        cooling_degree_time, [_dbt, _cool_base_],
         CoolingDegreeTime(), 'degC-hours')
     hourly_cool.convert_to_unit('degC-days')
 
@@ -784,4 +785,3 @@ with st.container():
     fig = fig.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
     
     st.plotly_chart(fig, use_container_width=True)
-
