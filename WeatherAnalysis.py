@@ -114,7 +114,7 @@ with st.sidebar:
         global_epw = EPW(epw_file)
     
     st.markdown('---')
-    
+ 
 # Global Colorset - Choose the heatmap color
 #------------------------------------------------------------------------------
 
@@ -329,6 +329,7 @@ st.markdown('---')
 
 import ladybug.psychrometrics
 import ladybug_comfort
+import ladybug_charts
 from ladybug.psychchart import PsychrometricChart
 from ladybug_charts.utils import Strategy
 from ladybug_comfort.chart.polygonpmv import PolygonPMV
@@ -353,8 +354,9 @@ with st.sidebar:
             psy_selected = st.selectbox('Select an environmental variable', options=fields.keys())
             psy_data = global_epw.import_data_by_field(fields[psy_selected])
             psy_draw_polygons = st.checkbox('Draw comfort polygons')
-            psy_clo_value = st.number_input('Clothing Level',value=1.1)
-            psy_met_value = st.number_input('Metabloic Rate',value=0.7)
+            psy_clo_value = st.number_input('Clothing Level',value=0.7)
+            psy_met_value = st.number_input('Metabloic Rate',value=1.1)
+            psy_air = st.number_input('Air Velocity (m/s)' ,value = 0.1)
             psy_strategy_options = ['Comfort', 'Evaporative Cooling',
                                     'Mass + Night Ventilation', 'Occupant use of fans',
                                     'Capture internal heat', 'Passive solar heating', 'All']
@@ -366,13 +368,15 @@ with st.sidebar:
             psy_data = None
             psy_clo_value = None
             psy_met_value = None
+            psy_air = None
             psy_db = st.number_input('Insert DBT value',min_value =-20, max_value = 50, value = 24)
             psy_rh = st.number_input('Insert RH value',min_value =0, max_value = 100, value = 45)
+            
         
 @st.cache_data(ttl=2)
 def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str,
                          load_data: str, draw_polygons: bool,
-                         _data: HourlyContinuousCollection) -> Figure:
+                         _data: HourlyContinuousCollection) -> Tuple[Figure, HourlyContinuousCollection]:
     """Create psychrometric chart figure.
     Args:
         epw: An EPW object.
@@ -388,7 +392,7 @@ def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str
     lb_lp = LegendParameters(colors=colorsets[global_colorset])
     lb_psy = PsychrometricChart(_epw.dry_bulb_temperature,
                                 _epw.relative_humidity, legend_parameters=lb_lp)
-
+    
     if selected_strategy == 'All':
         strategies = [Strategy.comfort, Strategy.evaporative_cooling,
                       Strategy.mas_night_ventilation, Strategy.occupant_use_of_fans,
@@ -406,19 +410,34 @@ def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str
     elif selected_strategy == 'Passive solar heating':
         strategies = [Strategy.passive_solar_heating]
         
-    pmv_param = ladybug_comfort.parameter.pmv.PMVParameter(20,humid_ratio_upper = 0.08, humid_ratio_lower=0.00)
+    pmv_param = ladybug_comfort.parameter.pmv.PMVParameter(10,humid_ratio_upper = 1, humid_ratio_lower=0)
     
     if load_data == 'Load Hourly Data':
         
-        pmv = PolygonPMV(lb_psy,met_rate=[psy_met_value],clo_value=[psy_clo_value],comfort_parameter = pmv_param )
-    
+        pmv = PolygonPMV(lb_psy,met_rate=[psy_met_value],clo_value=[psy_clo_value], air_speed = [psy_air], comfort_parameter = pmv_param )
+        
+               
         if draw_polygons:
             
+            #Extracting values for the report
+            internal_heat_pc = round(sum(pmv.evaluate_polygon(pmv.internal_heat_polygon(),0.01)),2)/100
+            Fan_pc = round(sum(pmv.evaluate_polygon(pmv.fan_use_polygon(),0.01)),2)/100
+            nightflush_pc = round(sum(pmv.evaluate_polygon(pmv.night_flush_polygon(),0.01)),2)/100
+            evaluate_passive_solar = pmv.evaluate_passive_solar(global_epw.global_horizontal_radiation,50,8,12.8)
+            passivesolar_pc = round(sum(pmv.evaluate_polygon(pmv.passive_solar_polygon(evaluate_passive_solar[1]),0.01)),2)/100
+            evap_clg_pc = round(sum(pmv.evaluate_polygon(pmv.evaporative_cooling_polygon(),0.01)),2)/100
+            
+            comfort_value_pc = round((pmv.merged_comfort_data.total/8760)*100,2)
+            
+            strategies_percentages = [internal_heat_pc,Fan_pc,nightflush_pc,passivesolar_pc,evap_clg_pc,comfort_value_pc]
+            
             figure = lb_psy.plot(data=_data, polygon_pmv=pmv,
-                                 strategies=strategies,title='PSYCHROMETRIC CHART', show_title=True)
+                                 strategies=strategies,title='PSYCHROMETRIC CHART', show_title=True, solar_data =global_epw.global_horizontal_radiation )
+            
         else:
             figure = lb_psy.plot(data=_data, show_title=True)
-        return figure
+            
+        return figure, strategies_percentages
     
     else:
       
@@ -462,7 +481,8 @@ def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str
             
             st.metric('Saturated Vapour Pressure (Pa)', value = sat_p)
     
-        return figure
+        return figure, None
+
 
 @st.cache_data(ttl=2)
 def get_figure_config(title: str) -> dict:
@@ -477,30 +497,33 @@ def get_figure_config(title: str) -> dict:
             'scale': 1  # Multiply title/legend/axis/canvas sizes by this factor
         }
     }
-  
+
 with st.container():
     
     st.markdown(
         'A psychrometric chart can be used in two different ways. The first is done by plotting multiple data points, that represent the air conditions at a specific time, on the chart. Then, overlaying an area that identifies the “comfort zone.”  The comfort zone is defined as the range within occupants are satisfied with the surrounding thermal conditions. After plotting the air conditions and overlaying the comfort zone, it becomes possible to see how passive design strategies can extend the comfort zone.')
     
-    psy_chart_figure = get_psy_chart_figure(
+    psy_chart_figure, strategies_percentages = get_psy_chart_figure(
         global_epw, global_colorset, psy_selected_strategy, psy_radio,
         psy_draw_polygons,psy_data)
     
+    
     st.plotly_chart(psy_chart_figure, use_container_width=True, config=get_figure_config(f'Psychrometric_chart_{global_epw.location.city}'))
 
-             
-    # st.image('https://github.com/psychrometrics/psychrolib/raw/master/assets/psychrolib_relationships.svg',use_column_width='True',output_format='PNG')
+
+#Saving image
+psy_chart_figure.write_image("psy_main.png")
+    
+    
+# WINDROSE
+#------------------------------------------------------------------------------
+from ladybug.windrose import WindRose
 
 st.markdown('---')
 st.write("""
 # Wind Rose
 """)
 st.markdown('---')
-
-# WINDROSE
-#------------------------------------------------------------------------------
-from ladybug.windrose import WindRose
 
 with st.sidebar:
     
@@ -806,6 +829,3 @@ with st.container():
     fig = fig.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
     
     st.plotly_chart(fig, use_container_width=True)
-
-
-
