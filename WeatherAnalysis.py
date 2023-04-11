@@ -416,21 +416,22 @@ def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str
         
         pmv = PolygonPMV(lb_psy,met_rate=[psy_met_value],clo_value=[psy_clo_value], air_speed = [psy_air], comfort_parameter = pmv_param )
         
+        #Extracting values for the report
+        internal_heat_pc = round(sum(pmv.evaluate_polygon(pmv.internal_heat_polygon(),0.01)),2)/100
+        Fan_pc = round(sum(pmv.evaluate_polygon(pmv.fan_use_polygon(),0.01)),2)/100
+        nightflush_pc = round(sum(pmv.evaluate_polygon(pmv.night_flush_polygon(),0.01)),2)/100
+        evaluate_passive_solar = pmv.evaluate_passive_solar(global_epw.global_horizontal_radiation,50,8,12.8)
+        passivesolar_pc = round(sum(pmv.evaluate_polygon(pmv.passive_solar_polygon(evaluate_passive_solar[1]),0.01)),2)/100
+        evap_clg_pc = round(sum(pmv.evaluate_polygon(pmv.evaporative_cooling_polygon(),0.01)),2)/100
+        
+        comfort_value_pc = round((pmv.merged_comfort_data.total/8760)*100,2)
+        
+        strategies_percentages = [internal_heat_pc,Fan_pc,nightflush_pc,passivesolar_pc,evap_clg_pc,comfort_value_pc]
+            
                
         if draw_polygons:
             
-            #Extracting values for the report
-            internal_heat_pc = round(sum(pmv.evaluate_polygon(pmv.internal_heat_polygon(),0.01)),2)/100
-            Fan_pc = round(sum(pmv.evaluate_polygon(pmv.fan_use_polygon(),0.01)),2)/100
-            nightflush_pc = round(sum(pmv.evaluate_polygon(pmv.night_flush_polygon(),0.01)),2)/100
-            evaluate_passive_solar = pmv.evaluate_passive_solar(global_epw.global_horizontal_radiation,50,8,12.8)
-            passivesolar_pc = round(sum(pmv.evaluate_polygon(pmv.passive_solar_polygon(evaluate_passive_solar[1]),0.01)),2)/100
-            evap_clg_pc = round(sum(pmv.evaluate_polygon(pmv.evaporative_cooling_polygon(),0.01)),2)/100
-            
-            comfort_value_pc = round((pmv.merged_comfort_data.total/8760)*100,2)
-            
-            strategies_percentages = [internal_heat_pc,Fan_pc,nightflush_pc,passivesolar_pc,evap_clg_pc,comfort_value_pc]
-            
+           
             figure = lb_psy.plot(data=_data, polygon_pmv=pmv,
                                  strategies=strategies,title='PSYCHROMETRIC CHART', show_title=True, solar_data =global_epw.global_horizontal_radiation )
             
