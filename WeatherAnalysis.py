@@ -329,7 +329,6 @@ st.markdown('---')
 
 import ladybug.psychrometrics
 import ladybug_comfort
-import ladybug_charts
 from ladybug.psychchart import PsychrometricChart
 from ladybug_charts.utils import Strategy
 from ladybug_comfort.chart.polygonpmv import PolygonPMV
@@ -348,7 +347,7 @@ with st.sidebar:
         fields = get_fields()
         
 
-        psy_radio = st.radio('',['Load Hourly Data', 'Extracting Psychrometrics'],index = 0, key='psy_radio')
+        psy_radio = st.radio('',['Load Hourly Data', 'Extracting Psychrometrics', 'Calculate PMV/PPD'],index = 0, key='psy_radio')
         
         if psy_radio == 'Load Hourly Data':
             psy_selected = st.selectbox('Select an environmental variable', options=fields.keys())
@@ -362,7 +361,7 @@ with st.sidebar:
                                     'Capture internal heat', 'Passive solar heating', 'All']
             psy_selected_strategy = st.selectbox(
                 'Select a passive strategy', options=psy_strategy_options)
-        else:
+        elif psy_radio == 'Extracting Psychrometrics':
             psy_selected_strategy = None
             psy_draw_polygons = None
             psy_data = None
@@ -371,12 +370,22 @@ with st.sidebar:
             psy_air = None
             psy_db = st.number_input('Insert DBT value',min_value =-20, max_value = 50, value = 24)
             psy_rh = st.number_input('Insert RH value',min_value =0, max_value = 100, value = 45)
-            
         
+        elif psy_radio == 'Calculate PMV/PPD':
+            psy_selected_strategy = None
+            psy_draw_polygons = None
+            psy_data = None
+            psy_db = st.number_input('DBT/MRT',min_value =-20, max_value = 50, value = 24)
+            psy_rh = st.number_input('RH',min_value =0, max_value = 100, value = 45)
+            psy_clo_value = st.number_input('Clothing Level',value=0.7)
+            psy_met_value = st.number_input('Metabloic Rate',value=1.1)
+            psy_air = st.number_input('Air Velocity (m/s)' ,value = 0.1)
+            
+            
 @st.cache_data(ttl=2)
 def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str,
                          load_data: str, draw_polygons: bool,
-                         _data: HourlyContinuousCollection) -> Tuple[Figure, HourlyContinuousCollection]:
+                         _data: HourlyContinuousCollection) -> Tuple[Figure, HourlyContinuousCollection, Tuple]:
     """Create psychrometric chart figure.
     Args:
         epw: An EPW object.
@@ -427,8 +436,7 @@ def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str
         comfort_value_pc = round((pmv.merged_comfort_data.total/8760)*100,2)
         
         strategies_percentages = [internal_heat_pc,Fan_pc,nightflush_pc,passivesolar_pc,evap_clg_pc,comfort_value_pc]
-            
-               
+        
         if draw_polygons:
             
            
@@ -438,10 +446,12 @@ def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str
         else:
             figure = lb_psy.plot(data=_data, show_title=True)
             
-        return figure, strategies_percentages
+        return figure, strategies_percentages, None
     
-    else:
-      
+    elif load_data == 'Extracting Psychrometrics':
+        
+        
+        
         lb_psy_ext = PsychrometricChart(psy_db,psy_rh)
         figure = lb_psy_ext.plot(title='PSYCHROMETRIC CHART', show_title=True)
         
@@ -481,9 +491,31 @@ def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str
         with col7:
             
             st.metric('Saturated Vapour Pressure (Pa)', value = sat_p)
-    
-        return figure, None
+        
+        return figure, None,  None
 
+    else:
+        
+        lb_psy_ext = PsychrometricChart(psy_db,psy_rh)
+        figure = lb_psy_ext.plot(title='PSYCHROMETRIC CHART', show_title=True)
+        
+        PMV_cal = ladybug_comfort.pmv.fanger_pmv(psy_db, psy_db , psy_air , psy_rh, psy_met_value, psy_clo_value)
+        
+        col1,col2,col3,col4 = st.columns([2,1,1,2])
+        
+        with col1:
+            st.markdown('')
+            
+        with col2:
+            st.metric(':red[PMV Fanger Value]', value = round(PMV_cal[0],2))
+        
+        with col3:
+            st.metric(':red[PPD Fanger Value (%)]',value = round(PMV_cal[1],2) )
+            
+        with col4:
+            st.markdown('')
+        
+        return figure, None, PMV_cal
 
 @st.cache_data(ttl=2)
 def get_figure_config(title: str) -> dict:
@@ -501,10 +533,22 @@ def get_figure_config(title: str) -> dict:
 
 with st.container():
     
+    st.markdown('The following Psychrometric chart contains THREE functions here:')
     st.markdown(
-        'A psychrometric chart can be used in two different ways. The first is done by plotting multiple data points, that represent the air conditions at a specific time, on the chart. Then, overlaying an area that identifies the “comfort zone.”  The comfort zone is defined as the range within occupants are satisfied with the surrounding thermal conditions. After plotting the air conditions and overlaying the comfort zone, it becomes possible to see how passive design strategies can extend the comfort zone.')
+        '(1) Load Hourly Data: A psychrometric chart plots multiple data '
+        'points, that represent the air conditions at a specific time, on the chart and overlays an area '
+        'that identifies the “comfort zone.”  The comfort zone is defined as the range within occupants are '
+        'satisfied with the surrounding thermal conditions. After plotting the air conditions and overlaying '
+        'the comfort zone, it becomes possible to see how passive design strategies can extend the comfort '
+        'zone.')
+    st.markdown(
+        '(2) Extracting psychrometrics: Calculating the psychrometrics based on the given dry bulb temperature'
+        ' and relative humidity')
+    st.markdown(
+        '(3) Calculate PMV/PPD: Calculating thermal comfort indices including Predicted Mean Vote (PMV) and Percentage of People Dissatisfied (PPD)' 
+        ' based on the given necessary inputs for an indoor environmental condition.')
     
-    psy_chart_figure, strategies_percentages = get_psy_chart_figure(
+    psy_chart_figure, strategies_percentages, PMV_cal  = get_psy_chart_figure(
         global_epw, global_colorset, psy_selected_strategy, psy_radio,
         psy_draw_polygons,psy_data)
     
