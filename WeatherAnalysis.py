@@ -496,9 +496,12 @@ def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str
 
     else:
         
+        pmv = PolygonPMV(lb_psy,met_rate=[psy_met_value],clo_value=[psy_clo_value], air_speed = [psy_air], comfort_parameter = pmv_param )
+
         lb_psy_ext = PsychrometricChart(psy_db,psy_rh)
-        figure = lb_psy_ext.plot(title='PSYCHROMETRIC CHART', show_title=True)
+        figure = lb_psy_ext.plot(polygon_pmv=pmv, title='PSYCHROMETRIC CHART', show_title=True)
         
+
         PMV_cal = ladybug_comfort.pmv.fanger_pmv(psy_db, psy_db , psy_air , psy_rh, psy_met_value, psy_clo_value)
         
         col1,col2,col3,col4 = st.columns([2,1,1,2])
@@ -829,48 +832,3 @@ with st.container():
         st.metric(':blue[**TOTOAL COOLING DEGREE HOURS**]', value = round(hourly_cool.total))
     with col2:
         st.metric(':red[**TOTAL HEATING DEGREE HOURS**]', value = round(hourly_heat.total))
-
-
-#Distributed DBT Plot
-#------------------------------------------------------------------------------
-import plotly.express as px
-
-
-    
-with st.sidebar:
-    
-    with st.expander('Temperature Range Settings'):
-    
-        min_val = st.number_input("Minimum Value", min_value = -20, max_value = 0, value = 0)
-        max_val = st.number_input("Maximum Value", min_value = 20, max_value = 60, value = 40)
-        steps = st.slider("Number of Steps", min_value = 1, max_value = 5, value = 2)
-
-with st.container():
-    
-    st.markdown('---')
-    st.header('Distributed Temperature Plot')
-    st.markdown('---')
-    
-    dbt = global_epw.dry_bulb_temperature
-     
-    db_df = pd.DataFrame(list(dbt.values), columns = ['Dry Bulb Temperature'])
-    
-    bins = list(np.arange(min_val,max_val,steps))
-    
-    @st.cache_data(ttl=2)
-    def get_ranges():
-        ranges = []
-        for i in range(0,(len(bins)-1)):
-            x = str(f'{bins[i]}-{bins[i]+steps}°C')
-            ranges.append(x)
-        return ranges
-    
-    ranges_str = get_ranges()
-    
-    db_df['Temperature Range'] = pd.cut(db_df['Dry Bulb Temperature'], bins, labels = ranges_str)
-    db_df = db_df.groupby('Temperature Range').count()
-    
-    fig = px.bar(db_df)
-    fig = fig.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
-    
-    st.plotly_chart(fig, use_container_width=True)
