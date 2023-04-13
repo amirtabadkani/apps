@@ -35,7 +35,7 @@ with st.container():
 with st.sidebar:
     st.header('__EPW Visualiser Toolkit__')
     st.markdown('_Developed by **Amir Tabadkani**, \nPh.D. Computational Design Lead, Sustainability_')
-    st.write('Source codes: Ladybug Tools Core SDK Documentation')
+    # st.write('Source codes: Ladybug Tools Core SDK Documentation')
 #st.sidebar.image('https://www.ceros.com/wp-content/uploads/2019/04/Stantec_Logo.png',use_column_width='auto',output_format='PNG')
 
 # Loading colorsets used in Legend Parameters
@@ -376,11 +376,12 @@ with st.sidebar:
             psy_selected_strategy = None
             psy_draw_polygons = None
             psy_data = None
-            psy_db = st.number_input('DBT/MRT',min_value =-20, max_value = 50, value = 24)
+            psy_db = st.number_input('DBT',min_value =-20, max_value = 50, value = 24)
             psy_rh = st.number_input('RH',min_value =0, max_value = 100, value = 45)
+            psy_mrt = st.number_input('MRT',min_value =0, max_value = 100, value = psy_db)
+            psy_air = st.number_input('Air Velocity (m/s)' ,value = 0.1)
             psy_clo_value = st.number_input('Clothing Level',value=0.7)
             psy_met_value = st.number_input('Metabloic Rate',value=1.1)
-            psy_air = st.number_input('Air Velocity (m/s)' ,value = 0.1)
             
             
 @st.cache_data(ttl=2)
@@ -503,7 +504,7 @@ def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str
         figure = lb_psy_ext.plot(polygon_pmv=pmv, title='PSYCHROMETRIC CHART', show_title=True)
         
 
-        PMV_cal = ladybug_comfort.pmv.fanger_pmv(psy_db, psy_db , psy_air , psy_rh, psy_met_value, psy_clo_value)
+        PMV_cal = ladybug_comfort.pmv.fanger_pmv(psy_db, psy_mrt , psy_air , psy_rh, psy_met_value, psy_clo_value)
         
         col1,col2,col3,col4 = st.columns([2,1,1,2])
         
@@ -511,10 +512,10 @@ def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str
             st.markdown('')
             
         with col2:
-            st.metric(':red[PMV Fanger Value]', value = round(PMV_cal[0],2))
+            st.metric('**:orange[PMV Fanger Value]**', value = round(PMV_cal[0],2))
         
         with col3:
-            st.metric(':red[PPD Fanger Value (%)]',value = round(PMV_cal[1],2) )
+            st.metric('**:orange[PPD Fanger Value (%)]**',value = round(PMV_cal[1],2) )
             
         with col4:
             st.markdown('')
@@ -621,6 +622,7 @@ def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int
     lb_wind_rose = WindRose(wind_dir, wind_spd)
     lb_wind_rose.legend_parameters = lb_lp
     
+    
     return lb_wind_rose.plot(title='Windrose',show_title=True)
 
 @st.cache_data(ttl=2)
@@ -677,6 +679,11 @@ with st.container():
         st.plotly_chart(windrose_figure_temp, use_container_width=True,
                         config=get_figure_config(f'Windrose_{global_epw.location.city}'))
     st.markdown('---')
+
+#Saving image
+windrose_figure.write_image("windrose.png")
+windrose_figure_temp.write_image("windrose-temp.png")
+
 
 #SUNPATH
 #-----------------------------------------------------------------------------
