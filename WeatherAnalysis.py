@@ -714,7 +714,7 @@ with st.sidebar:
             sunpath_data = global_epw._get_data_by_field(fields[sunpath_selected])
             sunpath_switch = None
             
-
+@st.cache_data(ttl=2)
 def get_sunpath_figure(sunpath_type: str, global_colorset: str, _epw: EPW = None,
                        switch: bool = False,
                        _data: HourlyContinuousCollection = None, ) -> Figure:
@@ -750,8 +750,10 @@ with st.container():
                     config=get_figure_config(
                         f'Sunpath_{global_epw.location.city}'))
 
+
 #Saving images
 sunpath_figure.write_image("Sunpath.png")
+
 
 #Degree Days
 #------------------------------------------------------------------------------
@@ -769,7 +771,7 @@ with st.sidebar:
 
     
         degree_days_cool_base = st.number_input('Base cooling temperature',
-                                                value=23)
+                                                value=24)
 @st.cache_data(ttl=2)
 def get_degree_days_figure(
     _dbt: HourlyContinuousCollection, _heat_base_: int, _cool_base_: int,
@@ -1000,21 +1002,21 @@ document.add_paragraph('Degree days is another way of combining time and tempera
                 'temperature. I find it easiest to start with degree hours.'
                 'For example, the most commonly used base temperature for heating is 18°C.'
                 'So if the temperature at your house is 12°C for one hour, you just'
-                'accumulated 6 degree hours. If the temperature is 15°C for the next hour'
-                ',you’ve got another 3 degree hours and 9 degree hours total.'
+                ' accumulated 6 degree hours. If the temperature is 15°C for the next hour'
+                ', you’ve got another 3 degree hours and 9 degree hours total.'
                 'To find the number of degree days, you divide it by 24,'
                 ' so you’ve got one degree day in this example.'
                 'You can do that for every hour of the year to find the total and then divide by 24.'
                 ' Or you can use the average temperature for each day to get degree days directly.'
-                'Cooling degree days (CDD) – Same principle as for heating degree days but usually'
-                'with a different base temperature which is here set as 23°C by default.') 
+                'Same principle as for heating degree days applies to Cooling degree days (CDD) but '
+                'with a different base temperature which is typically set as 24°C by default.') 
 document.add_paragraph(f'Following the selected base temperatures, total HEATING HOURS and COOLING HOURS are respetively {round(hourly_heat.total,0)} and {round(hourly_heat.total,0)} in {global_epw.location.city}')
 document.add_picture('CDD_HDD.png', width=Inches(w_res), height= Inches(h_res*1.5))
 document.add_paragraph('Figure 8. Cooling/Heating Degree Days', style='Caption')
 
 
 document.add_paragraph('Distributed Temperature Plot', style='List Number')
-p4 = document.add_paragraph('To better understand the outdoor tempeature intensity, this plot divides the dry'
+p4 = document.add_paragraph('To better understand the outdoor temperature levels, the figure below divides the dry'
                        f' bulb temperature into sequential bins from the minimum value of {min_val_bin}°C up to the maximum value of {max_val_bin}°C'
                        f' where the highest and lowest intensities are')
 p4.add_run(f' {Maximum_bin} and ').bold= True   
