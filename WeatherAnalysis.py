@@ -752,6 +752,7 @@ with st.container():
 
 
 #Saving images
+@st.cache_data(ttl=2)
 sunpath_figure_image = get_sunpath_figure('from epw location', global_colorset, global_epw, sunpath_switch, sunpath_data)
 sunpath_figure_image.write_image("Sunpath.png")
 sunpath_var_image = get_sunpath_figure('with epw data', global_colorset, global_epw, sunpath_switch, sunpath_data)
