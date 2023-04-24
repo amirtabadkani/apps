@@ -714,7 +714,7 @@ with st.sidebar:
             sunpath_data = global_epw._get_data_by_field(fields[sunpath_selected])
             sunpath_switch = None
             
-@st.cache_data(ttl=2)
+
 def get_sunpath_figure(sunpath_type: str, global_colorset: str, _epw: EPW = None,
                        switch: bool = False,
                        _data: HourlyContinuousCollection = None, ) -> Figure:
@@ -752,7 +752,6 @@ with st.container():
 
 
 #Saving images
-@st.cache_data(ttl=2)
 sunpath_figure_image = get_sunpath_figure('from epw location', global_colorset, global_epw, sunpath_switch, sunpath_data)
 sunpath_figure_image.write_image("Sunpath.png")
 sunpath_var_image = get_sunpath_figure('with epw data', global_colorset, global_epw, sunpath_switch, sunpath_data)
