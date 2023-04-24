@@ -988,8 +988,7 @@ document.add_paragraph('Solar charts and sun path diagrams have been devised as 
                        'for any hour in any day, to provide a valuable tool for designers and planners.'
                        'A separate sun path diagram is required for each latitude.'
                        ' Additionally, plotting one of the environmental variables on the sunpath diagram'
-                       f' can help to understand its variation across the sun position. In this case, it plots the {sunpath_selected}'
-                       ' over the diagram')
+                       ' can help to understand its variation across the sun position.')
 
 document.add_picture('Sunpath.png', width=Inches(4.2), height= Inches(3))
 document.add_picture('Sunpath-var.png', width=Inches(4.2), height= Inches(3))
