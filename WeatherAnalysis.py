@@ -694,7 +694,26 @@ st.write("""
          
 ***
 """)
-
+with st.sidebar:
+    
+    with st.expander('Sunpath'):
+    
+        sunpath_radio = st.radio(
+            '', ['from epw location', 'with epw data'],
+            index=0, key='sunpath_'
+        )
+    
+        if sunpath_radio == 'from epw location':
+            sunpath_switch = st.checkbox('Switch colors', key='sunpath_switch',
+                                         help='Reverse the colorset')
+            sunpath_data = None
+    
+        else:
+            sunpath_selected = st.selectbox(
+                'Select an environmental variable', options=fields.keys(), key='sunpath')
+            sunpath_data = global_epw._get_data_by_field(fields[sunpath_selected])
+            sunpath_switch = None
+            
 @st.cache_data(ttl=2)
 def get_sunpath_figure(sunpath_type: str, global_colorset: str, _epw: EPW = None,
                        switch: bool = False,
@@ -718,28 +737,6 @@ def get_sunpath_figure(sunpath_type: str, global_colorset: str, _epw: EPW = None
         colors = colorsets[global_colorset]
         return lb_sunpath.plot(title=str(_data.header.data_type),colorset=colors, data=_data, show_title=True)
 
-
-with st.sidebar:
-    
-    with st.expander('Sunpath'):
-    
-        sunpath_radio = st.radio(
-            '', ['from epw location', 'with epw data'],
-            index=0, key='sunpath_'
-        )
-    
-        if sunpath_radio == 'from epw location':
-            sunpath_switch = st.checkbox('Switch colors', key='sunpath_switch',
-                                         help='Reverse the colorset')
-            sunpath_data = None
-    
-        else:
-            sunpath_selected = st.selectbox(
-                'Select an environmental variable', options=fields.keys(), key='sunpath')
-            sunpath_data = global_epw._get_data_by_field(fields[sunpath_selected])
-            sunpath_switch = None
-
-                
 with st.container():
 
     st.markdown('Generate a sunpath using EPW location. Additionally, you can'
@@ -752,6 +749,13 @@ with st.container():
     st.plotly_chart(sunpath_figure, use_container_width=True,
                     config=get_figure_config(
                         f'Sunpath_{global_epw.location.city}'))
+
+
+#Saving images
+sunpath_figure_image = get_sunpath_figure('from epw location', global_colorset, global_epw, sunpath_switch, sunpath_data)
+sunpath_figure_image.write_image("Sunpath.png")
+sunpath_var_image = get_sunpath_figure('with epw data', global_colorset, global_epw, sunpath_switch, sunpath_data)
+sunpath_var_image.write_image("Sunpath-var.png")
 
 #Degree Days
 #------------------------------------------------------------------------------
@@ -842,6 +846,9 @@ with st.container():
         st.metric(':red[**TOTAL HEATING DEGREE HOURS**]', value = round(hourly_heat.total))
 
 
+#Saving image
+degree_days_figure.write_image("CDD_HDD.png")
+
 #Distributed DBT Plot
 #------------------------------------------------------------------------------
 import plotly.express as px
@@ -852,8 +859,8 @@ with st.sidebar:
     
     with st.expander('Temperature Range Settings'):
     
-        min_val = st.number_input("Minimum Value", min_value = -20, max_value = 0, value = 0)
-        max_val = st.number_input("Maximum Value", min_value = 20, max_value = 60, value = 40)
+        min_val_bin = st.number_input("Minimum Value", min_value = -20, max_value = 0, value = 0)
+        max_val_bin = st.number_input("Maximum Value", min_value = 20, max_value = 60, value = 40)
         steps = st.slider("Number of Steps", min_value = 1, max_value = 5, value = 2)
 
 with st.container():
@@ -866,7 +873,7 @@ with st.container():
      
     db_df = pd.DataFrame(list(dbt.values), columns = ['Dry Bulb Temperature'])
     
-    bins = list(np.arange(min_val,max_val,steps))
+    bins = list(np.arange(min_val_bin,max_val_bin,steps))
     
     @st.cache_data(ttl=2)
     def get_ranges():
@@ -881,7 +888,149 @@ with st.container():
     db_df['Temperature Range'] = pd.cut(db_df['Dry Bulb Temperature'], bins, labels = ranges_str)
     db_df = db_df.groupby('Temperature Range').count()
     
-    fig = px.bar(db_df)
-    fig = fig.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
+    temp_bins_plot = px.bar(db_df)
+    temp_bins_plot = temp_bins_plot.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(temp_bins_plot, use_container_width=True)
+
+
+Maximum_bin = db_df.index[(db_df["Dry Bulb Temperature"].argmax())]
+Minimum_bin = db_df.index[(db_df["Dry Bulb Temperature"].argmin())]
+
+
+#Saving image
+temp_bins_plot.write_image('temp-bins.png')
+
+#Generate the REPORT in WORD
+#------------------------------------------------------------------------------
+
+from docx import Document
+from docx.shared import Inches
+
+
+export_as_docs = st.button("Export Report (.docx)")
+
+document = Document()
+
+x = 2
+h_res = x
+w_res = 3*x
+
+document.add_heading(f'Weather Analysis for {global_epw.location.city} ', level= 0)
+
+p1 = document.add_paragraph('This report outlines the Weather Analysis for ')
+p1.add_run(f'{global_epw.location.city}').bold = True
+p1.add_run(' located in ')
+p1.add_run(f'{global_epw.location.country}').bold = True
+p1.add_run(' in the following sections: ')
+
+document.add_paragraph('Periodic Weather Data Analysis', style='List Number')
+p2 = document.add_paragraph('The following graphs illustrate the ')
+p2.add_run(f'{hourly_selected}').bold = True
+p2.add_run(f' variable for the selected period in which the average {hourly_selected} is {ave_val}{var_unit} for the year,'
+           f' and ranges from {min_value}{var_unit} up to {max_value}{var_unit} (Figure 1).'
+           f' Figure 2 and Figure 3 show the mean daily values and {hourly_selected} variation per day.')
+
+document.add_picture('hourly_data.png', width=Inches(w_res), height= Inches(h_res))
+document.add_paragraph(f'Figure 1. Hourly {hourly_selected} Analysis', style='Caption')
+
+document.add_picture('Daily_data.png', width=Inches(w_res), height= Inches(h_res))
+document.add_paragraph(f'Figure 2. Mean Daily {hourly_selected} Analysis', style='Caption')
+
+document.add_picture('Line_data.png', width=Inches(w_res), height= Inches(h_res))
+document.add_paragraph(f'Figure 3. Average/Range {hourly_selected} Analysis', style='Caption')
+
+document.add_paragraph(f'Conditional Hourly Data: {hourly_selected}', style='List Number')
+p3 = document.add_paragraph('Below graph plots the given thresholds between')
+p3.add_run(f' {threshold_min}{var_unit}').bold= True
+p3.add_run(' and ')
+p3.add_run(f'{threshold_max}{var_unit}').bold = True 
+p3.add_run(f' for {hourly_selected}. Additionally, the number of met hours within the given range is {met_num_hours}hrs and unmet hours is {unmet_num_hours}hrs.')
+
+document.add_picture('conditional_hourly_data.png', width=Inches(w_res), height= Inches(h_res))
+document.add_paragraph(f'Figure 4. Hourly Conditional Analysis of {hourly_selected}', style='Caption')
+
+document.add_paragraph('Psychrometric Chart', style='List Number')
+document.add_paragraph('A psychrometric chart can be used in two different ways.'
+                            ' The first is done by plotting multiple data points, that represent'
+                            ' the air conditions at a specific time, on the chart. Then, overlaying'
+                            ' an area that identifies the “comfort zone.” The comfort zone is defined '
+                            'as the range within occupants are satisfied with the surrounding thermal '
+                            'conditions. After plotting the air conditions and overlaying the comfort '
+                            'zone, it becomes possible to see how passive design strategies can extend '
+                            'the comfort zone.')
+
+document.add_picture('psy_main.png', width=Inches(w_res), height= Inches(h_res*2))
+document.add_paragraph('Figure 5. Psychrometric Chart Analysis', style='Caption')
+
+document.add_paragraph(f'The chart above depicts the hourly distribution of the outdoor air condition throughout the year associated with hourly relative humidty and humidity ratio.'
+                            f' In particular, having a Clothing Level of {psy_clo_value} and Metabloic Rate of {psy_met_value}'
+                            ' resulted in the following statistics:')
+document.add_paragraph(f'{strategies_percentages[5]}% of the time is in comfortable range without the need of any passive/active strategies.', style = 'List Bullet')
+document.add_paragraph(f'{strategies_percentages[0]}% of the time, internal heat gains can improve the environmental condition to meet the comfortable range.', style = 'List Bullet')
+document.add_paragraph(f'{strategies_percentages[1]}% of the time, occupants can use fans (assuming 1m/s of air velocity around the occupant) to reduce the temperature and improve thermal comfort.', style = 'List Bullet')
+document.add_paragraph(f'{strategies_percentages[2]}% of the time, thermal massing and night ventilation allow the possibility to maintain the heat during the day and release it during the night to reduce the temperature passively.', style = 'List Bullet')
+document.add_paragraph(f'{strategies_percentages[3]}% of the time, passive solar heat gains can increase the temperature as an additional potential. Noting that it assumes a 50W/m2 outdoor solar flux (W/m2) that is needed to raise the temperature of a theoretical building by 1 degree Celsius and can maintain its temperature for 8 hours.', style = 'List Bullet')
+document.add_paragraph(f'{strategies_percentages[4]}% of the time, evaporative cooling strategy has the opportunity to cool down the building while increasing the relative humidity.', style = 'List Bullet')
+
+document.add_paragraph('Wind Rose Diagrams', style='List Number')
+document.add_paragraph('Wind roses are graphical charts that characterize the speed and direction'
+                       ' of winds at a location. Presented in a circular format, the length of each'
+                       ' "spoke" around the circle indicates the amount of time that the wind blows'
+                       ' from a particular direction. Colors along the spokes indicate categories'
+                       ' of wind speed. Additionally, the second diagram plots the'
+                       ' Dry Bulb Temperature of for each wind direction which is helpful to understand'
+                       ' the possibilities of having natural ventilation with comfortable outdoor temperature.')
+
+document.add_picture('windrose.png', width=Inches(4.2), height= Inches(3))
+document.add_picture('windrose-temp.png', width=Inches(4.2), height= Inches(3))
+document.add_paragraph('Figure 6. (Top) Wind Rose vs. Wind Direction , (Bottom) Wind Direction vs. Dry Bulb Temperature', style='Caption')
+
+document.add_paragraph('Sunpath Diagram', style='List Number')
+document.add_paragraph('Solar charts and sun path diagrams have been devised as visual'
+                       'aids so that the solar position can be easily and quickly established'
+                       'for any hour in any day, to provide a valuable tool for designers and planners.'
+                       'A separate sun path diagram is required for each latitude.'
+                       ' Additionally, plotting one of the environmental variables on the sunpath diagram'
+                       f' can help to understand its variation across the sun position. In this case, it plots the {sunpath_selected}'
+                       ' over the diagram')
+
+document.add_picture('Sunpath.png', width=Inches(4.2), height= Inches(3))
+document.add_picture('Sunpath-var.png', width=Inches(4.2), height= Inches(3))
+document.add_paragraph('Figure 7. (Top) Sunpath Diagram , (Bottom) Sunpath Dry Bulb Temperature', style='Caption')
+
+document.add_paragraph('Cooling/Heating Degree Days/Hours', style='List Number')
+document.add_paragraph('Degree days is another way of combining time and temperature, but it has different implications for heating and cooling than does design temperature.'
+                       ' Heating degree days (HDD) – This is the number that tells you' 
+                'how long a location stays below a special temperature called the base'
+                'temperature. I find it easiest to start with degree hours.'
+                'For example, the most commonly used base temperature for heating is 18°C.'
+                'So if the temperature at your house is 12°C for one hour, you just'
+                'accumulated 6 degree hours. If the temperature is 15°C for the next hour'
+                ',you’ve got another 3 degree hours and 9 degree hours total.'
+                'To find the number of degree days, you divide it by 24,'
+                ' so you’ve got one degree day in this example.'
+                'You can do that for every hour of the year to find the total and then divide by 24.'
+                ' Or you can use the average temperature for each day to get degree days directly.'
+                'Cooling degree days (CDD) – Same principle as for heating degree days but usually'
+                'with a different base temperature which is here set as 23°C by default.') 
+document.add_paragraph(f'Following the selected base temperatures, total HEATING HOURS and COOLING HOURS are respetively {round(hourly_heat.total,0)} and {round(hourly_heat.total,0)} in {global_epw.location.city}')
+document.add_picture('CDD_HDD.png', width=Inches(w_res), height= Inches(h_res*1.5))
+document.add_paragraph('Figure 8. Cooling/Heating Degree Days', style='Caption')
+
+
+document.add_paragraph('Distributed Temperature Plot', style='List Number')
+p4 = document.add_paragraph('To better understand the outdoor tempeature intensity, this plot divides the dry'
+                       f' bulb temperature into sequential bins from the minimum value of {min_val_bin}°C up to the maximum value of {max_val_bin}°C'
+                       f' where the highest and lowest intensities are')
+p4.add_run(f' {Maximum_bin} and ').bold= True   
+p4.add_run(f'{Minimum_bin}').bold= True          
+p4.add_run(' respectively')              
+                       
+
+document.add_picture('temp-bins.png', width=Inches(w_res), height= Inches(h_res*1.5))
+document.add_paragraph('Figure 9. Temperature Ranges', style='Caption')
+
+
+if export_as_docs:
+    document.save(f'WeatherAnalysis-{global_epw.location.city}.docx')
