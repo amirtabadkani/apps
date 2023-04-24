@@ -750,12 +750,8 @@ with st.container():
                     config=get_figure_config(
                         f'Sunpath_{global_epw.location.city}'))
 
-
 #Saving images
-sunpath_figure_image = get_sunpath_figure('from epw location', global_colorset, global_epw, sunpath_switch, sunpath_data)
-sunpath_figure_image.write_image("Sunpath.png")
-sunpath_var_image = get_sunpath_figure('with epw data', global_colorset, global_epw, sunpath_switch, sunpath_data)
-sunpath_var_image.write_image("Sunpath-var.png")
+sunpath_figure.write_image("Sunpath.png")
 
 #Degree Days
 #------------------------------------------------------------------------------
