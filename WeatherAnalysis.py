@@ -991,8 +991,7 @@ document.add_paragraph('Solar charts and sun path diagrams have been devised as 
                        ' can help to understand its variation across the sun position.')
 
 document.add_picture('Sunpath.png', width=Inches(4.2), height= Inches(3))
-document.add_picture('Sunpath-var.png', width=Inches(4.2), height= Inches(3))
-document.add_paragraph('Figure 7. (Top) Sunpath Diagram , (Bottom) Sunpath Dry Bulb Temperature', style='Caption')
+document.add_paragraph('Figure 7. Sunpath Diagram', style='Caption')
 
 document.add_paragraph('Cooling/Heating Degree Days/Hours', style='List Number')
 document.add_paragraph('Degree days is another way of combining time and temperature, but it has different implications for heating and cooling than does design temperature.'
