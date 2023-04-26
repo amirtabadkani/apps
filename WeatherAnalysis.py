@@ -5,6 +5,7 @@
 
 import pandas as pd
 import numpy as np
+import os
 
 import streamlit as st
 from ladybug.epw import EPW
@@ -1028,5 +1029,10 @@ document.add_picture('temp-bins.png', width=Inches(w_res), height= Inches(h_res*
 document.add_paragraph('Figure 9. Temperature Ranges', style='Caption')
 
 
+
 if export_as_docs:
-    document.save(f'WeatherAnalysis-{global_epw.location.city}.docx')
+    filepath = os.environ['USERPROFILE']
+    document.save(os.path.join(filepath,"Downloads", f'WeatherAnalysis-{global_epw.location.city}.docx'))
+    
+st.markdown('Please note that the generated report will take your inputs as the basis of the weather analysis. Therefore, make sure you have selected the right values/thresholds and proper environmental variables given in the control panel based on your design needs.')
+st.markdown('**It is in your DOWNLOADS FOLDER now, ENJOY READING IT!**')
