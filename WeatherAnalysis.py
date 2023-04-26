@@ -1029,10 +1029,9 @@ document.add_picture('temp-bins.png', width=Inches(w_res), height= Inches(h_res*
 document.add_paragraph('Figure 9. Temperature Ranges', style='Caption')
 
 
-
 if export_as_docs:
     filepath = pathlib.Path.home()   
-    document.save(pathlib.Path(filepath,"Downloads", f'WeatherAnalysis-{global_epw.location.city}.docx'))
+    document.save(pathlib.Path.joinpath(filepath,"Downloads", f'WeatherAnalysis-{global_epw.location.city}.docx'))
     
 st.markdown('Please note that the generated report will take your inputs as the basis of the weather analysis. Therefore, make sure you have selected the right values/thresholds and proper environmental variables given in the control panel based on your design needs.')
 st.markdown('**The REPORT is in your DOWNLOADS folder now, ENJOY READING!**')
