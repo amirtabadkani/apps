@@ -9,4 +9,4 @@ plotly>=5.13.1
 pandas>=1.2.4
 numpy>=1.24.2
 python-docx>=0.8.11
-os>=10.0.19044.2728
+os
