@@ -1035,4 +1035,4 @@ st.download_button('Export Report (.docx)', decoded, f"WeatherAnalysis-{global_e
    
    
 st.markdown('Please note that the generated report will take your inputs as the basis of the weather analysis. Therefore, make sure you have selected the right values/thresholds and proper environmental variables given in the control panel based on your design needs.')
-st.markdown('**The REPORT is in your DOWNLOADS folder now, ENJOY READING!**')
+st.markdown('**ENJOY READING THE REPORT!**')
