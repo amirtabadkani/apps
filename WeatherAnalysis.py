@@ -1046,13 +1046,19 @@ document.add_paragraph('Figure 5. Psychrometric Chart Analysis', style='Caption'
 document.add_paragraph(f'The chart above depicts the hourly distribution of the outdoor air condition throughout the year associated with hourly relative humidty and humidity ratio.'
                             f' In particular, having a Clothing Level of {psy_clo_value} and Metabloic Rate of {psy_met_value}'
                             ' resulted in the following statistics:')
-document.add_paragraph(f'{strategies_percentages[5]}% of the time is in comfortable range without the need of any passive/active strategies.', style = 'List Bullet')
-document.add_paragraph(f'{strategies_percentages[0]}% of the time, internal heat gains can improve the environmental condition to meet the comfortable range.', style = 'List Bullet')
-document.add_paragraph(f'{strategies_percentages[1]}% of the time, occupants can use fans (assuming 1m/s of air velocity around the occupant) to reduce the temperature and improve thermal comfort.', style = 'List Bullet')
-document.add_paragraph(f'{strategies_percentages[2]}% of the time, thermal massing and night ventilation allow the possibility to maintain the heat during the day and release it during the night to reduce the temperature passively.', style = 'List Bullet')
-document.add_paragraph(f'{strategies_percentages[3]}% of the time, passive solar heat gains can increase the temperature as an additional potential. Noting that it assumes a 50W/m2 outdoor solar flux (W/m2) that is needed to raise the temperature of a theoretical building by 1 degree Celsius and can maintain its temperature for 8 hours.', style = 'List Bullet')
-document.add_paragraph(f'{strategies_percentages[4]}% of the time, evaporative cooling strategy has the opportunity to cool down the building while increasing the relative humidity.', style = 'List Bullet')
-
+if psy_radio == 'Load Hourly Data':
+    
+    document.add_paragraph(f'{strategies_percentages[5]}% of the time is in comfortable range without the need of any passive/active strategies.', style = 'List Bullet')
+    document.add_paragraph(f'{strategies_percentages[0]}% of the time, internal heat gains can improve the environmental condition to meet the comfortable range.', style = 'List Bullet')
+    document.add_paragraph(f'{strategies_percentages[1]}% of the time, occupants can use fans (assuming 1m/s of air velocity around the occupant) to reduce the temperature and improve thermal comfort.', style = 'List Bullet')
+    document.add_paragraph(f'{strategies_percentages[2]}% of the time, thermal massing and night ventilation allow the possibility to maintain the heat during the day and release it during the night to reduce the temperature passively.', style = 'List Bullet')
+    document.add_paragraph(f'{strategies_percentages[3]}% of the time, passive solar heat gains can increase the temperature as an additional potential. Noting that it assumes a 50W/m2 outdoor solar flux (W/m2) that is needed to raise the temperature of a theoretical building by 1 degree Celsius and can maintain its temperature for 8 hours.', style = 'List Bullet')
+    document.add_paragraph(f'{strategies_percentages[4]}% of the time, evaporative cooling strategy has the opportunity to cool down the building while increasing the relative humidity.', style = 'List Bullet')
+else:
+    with st.container():
+        
+        st.error('In order to have the analysis in line with the generated report, we suggest to select'+' Load Hourly Data Option '+'for Psychrometric chart analysis for the report!', icon="❌")
+    
 document.add_paragraph('Wind Rose Diagrams', style='List Number')
 document.add_paragraph('Wind roses are graphical charts that characterize the speed and direction'
                        ' of winds at a location. Presented in a circular format, the length of each'
