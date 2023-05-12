@@ -10,7 +10,7 @@ import os
 import streamlit as st
 from ladybug.epw import EPW
 import pathlib
-from plotly.graph_objects import Figure,Mesh3d
+from plotly.graph_objects import Figure
 from typing import List, Tuple
 
 from ladybug.datacollection import HourlyContinuousCollection
