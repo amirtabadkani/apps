@@ -1057,7 +1057,7 @@ if psy_radio == 'Load Hourly Data':
 else:
     with st.container():
         
-        st.error('In order to have the analysis in line with the generated report, we suggest to select'+' Load Hourly Data Option '+'for Psychrometric chart analysis for the report!', icon="❌")
+        st.error('In order to have the analysis in line with the generated report, we suggest to select'+' Load Hourly Data Option '+'for Psychrometric chart analysis!', icon="❌")
     
 document.add_paragraph('Wind Rose Diagrams', style='List Number')
 document.add_paragraph('Wind roses are graphical charts that characterize the speed and direction'
