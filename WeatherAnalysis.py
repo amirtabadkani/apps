@@ -5,11 +5,12 @@
 
 import pandas as pd
 import numpy as np
+import os
 
 import streamlit as st
 from ladybug.epw import EPW
 import pathlib
-from plotly.graph_objects import Figure
+from plotly.graph_objects import Figure,Mesh3d
 from typing import List, Tuple
 
 from ladybug.datacollection import HourlyContinuousCollection
@@ -112,7 +113,7 @@ with st.sidebar:
         global_epw = EPW(epw_file)
     
     st.markdown('---')
- 
+
 # Global Colorset - Choose the heatmap color
 #------------------------------------------------------------------------------
 
@@ -561,8 +562,7 @@ with st.container():
 
 #Saving image
 psy_chart_figure.write_image("psy_main.png")
-    
-    
+
 # WINDROSE
 #------------------------------------------------------------------------------
 from ladybug.windrose import WindRose
@@ -657,12 +657,80 @@ def get_windrose_figure_temp(st_month: int, st_day: int, st_hour: int, end_month
     
     return lb_windrose_temp.plot(title='Wind Direction vs. Dry Bulb Temperature', show_title=True)
  
+@st.cache_data(ttl=2)
+def get_windrose_figure_dir_rad(st_month: int, st_day: int, st_hour: int, end_month: int,
+                    end_day: int, end_hour: int, _epw, global_colorset) -> Figure:
+    
+    """Create windrose figure.
+    Args:
+        st_month: A number representing the start month.
+        st_day: A number representing the start day.
+        st_hour: A number representing the start hour.
+        end_month: A number representing the end month.
+        end_day: A number representing the end day.
+        end_hour: A number representing the end hour.
+        epw: An EPW object.
+        global_colorset: A string representing the name of a Colorset.
+    Returns:
+        A plotly figure.
+    """
+    
+    lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)        
+    
+    fields = get_fields()
+        
+    windrose_data = global_epw.import_data_by_field(fields['Direct Normal Radiation'])
+    
+    wind_dir = _epw.wind_direction.filter_by_analysis_period(lb_ap)
+    windrose_data_ = windrose_data.filter_by_analysis_period(lb_ap)
+    
+    lb_lp = LegendParameters(colors=colorsets[global_colorset])
+    
+    lb_windrose_dir = WindRose(wind_dir,windrose_data_)
+    lb_windrose_dir.legend_parameters = lb_lp
+    
+    return lb_windrose_dir.plot(title='Wind Direction vs. Direct Normal Radiation', show_title=True)
+
+@st.cache_data(ttl=2)
+def get_windrose_figure_diff_rad(st_month: int, st_day: int, st_hour: int, end_month: int,
+                    end_day: int, end_hour: int, _epw, global_colorset) -> Figure:
+    
+    """Create windrose figure.
+    Args:
+        st_month: A number representing the start month.
+        st_day: A number representing the start day.
+        st_hour: A number representing the start hour.
+        end_month: A number representing the end month.
+        end_day: A number representing the end day.
+        end_hour: A number representing the end hour.
+        epw: An EPW object.
+        global_colorset: A string representing the name of a Colorset.
+    Returns:
+        A plotly figure.
+    """
+    
+    lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)        
+    
+    fields = get_fields()
+        
+    windrose_data = global_epw.import_data_by_field(fields['Diffuse Horizontal Radiation'])
+    
+    wind_dir = _epw.wind_direction.filter_by_analysis_period(lb_ap)
+    windrose_data_ = windrose_data.filter_by_analysis_period(lb_ap)
+    
+    lb_lp = LegendParameters(colors=colorsets[global_colorset])
+    
+    lb_windrose_diff = WindRose(wind_dir,windrose_data_)
+    lb_windrose_diff.legend_parameters = lb_lp
+    
+    return lb_windrose_diff.plot(title='Wind Direction vs. Diffuse Horizontal Radiation', show_title=True)
+
 
 with st.container():
     
     st.markdown('Generate a wind rose to summarise the occurrence of winds at a location, showing their strength, direction and frequency, for the selected period and environmental parameter!')
     
-    col1,col2 = st.columns(2)
+    col1,col2,col3,col4 = st.columns(4)
     with col1:
         
         windrose_figure = get_windrose_figure(windrose_st_month, windrose_st_day, windrose_st_hour, windrose_end_month,
@@ -676,12 +744,28 @@ with st.container():
     
         st.plotly_chart(windrose_figure_temp, use_container_width=True,
                         config=get_figure_config(f'Windrose_{global_epw.location.city}'))
+    
+    with col3:
+        windrose_figure_dir = get_windrose_figure_dir_rad(windrose_st_month, windrose_st_day, windrose_st_hour, windrose_end_month,
+                                              windrose_end_day, windrose_end_hour, global_epw, global_colorset)
+    
+        st.plotly_chart(windrose_figure_dir, use_container_width=True,
+                        config=get_figure_config(f'Windrose_{global_epw.location.city}'))
+        
+    with col4:
+        windrose_figure_diff = get_windrose_figure_diff_rad(windrose_st_month, windrose_st_day, windrose_st_hour, windrose_end_month,
+                                              windrose_end_day, windrose_end_hour, global_epw, global_colorset)
+    
+        st.plotly_chart(windrose_figure_diff, use_container_width=True,
+                        config=get_figure_config(f'Windrose_{global_epw.location.city}'))
+        
     st.markdown('---')
 
 #Saving image
 windrose_figure.write_image("windrose.png")
 windrose_figure_temp.write_image("windrose-temp.png")
-
+windrose_figure_dir.write_image("windrose-dir.png")
+windrose_figure_diff.write_image("windrose-diff.png")
 
 #SUNPATH
 #-----------------------------------------------------------------------------
@@ -769,17 +853,10 @@ with st.sidebar:
 
     
         degree_days_cool_base = st.number_input('Base cooling temperature',
-                                                value=23)
-          
-        DD_st_hour = st.number_input(
-            'Start hour', min_value=0, max_value=23, value=0, key='DD_st_hour')
-        DD_end_hour = st.number_input(
-            'End hour', min_value=0, max_value=23, value=23, key='DD_end_hour')
-        
-
-
+                                                value=24)
 @st.cache_data(ttl=2)
-def get_degree_days_figure(_st_hour: int,_end_hour: int,_dbt:HourlyContinuousCollection, _heat_base_: int, _cool_base_: int,
+def get_degree_days_figure(
+    _dbt: HourlyContinuousCollection, _heat_base_: int, _cool_base_: int,
     global_colorset: str) -> Tuple[Figure,HourlyContinuousCollection,HourlyContinuousCollection]:
     """Create HDD and CDD figure.
     Args:
@@ -795,17 +872,14 @@ def get_degree_days_figure(_st_hour: int,_end_hour: int,_dbt:HourlyContinuousCol
         -   Heating degree days as a HourlyContinuousCollection.
         -   Cooling degree days as a HourlyContinuousCollection.
     """
-    lb_ap = AnalysisPeriod(1, 1, _st_hour, 12, 31, _end_hour)
-    
-    filtered_data = _dbt.filter_by_analysis_period(lb_ap)
-    
-    hourly_heat = filtered_data.compute_function_aligned(
-        heating_degree_time, [filtered_data, _heat_base_],
+
+    hourly_heat = HourlyContinuousCollection.compute_function_aligned(
+        heating_degree_time, [_dbt, _heat_base_],
         HeatingDegreeTime(), 'degC-hours')
     hourly_heat.convert_to_unit('degC-days')
 
-    hourly_cool = filtered_data.compute_function_aligned(
-        cooling_degree_time, [filtered_data, _cool_base_],
+    hourly_cool = HourlyContinuousCollection.compute_function_aligned(
+        cooling_degree_time, [_dbt, _cool_base_],
         CoolingDegreeTime(), 'degC-hours')
     hourly_cool.convert_to_unit('degC-days')
 
@@ -816,7 +890,6 @@ def get_degree_days_figure(_st_hour: int,_end_hour: int,_dbt:HourlyContinuousCol
                                   hourly_heat.total_monthly()], legend_parameters=lb_lp)
 
     return monthly_chart.plot(title='Degree Days'), hourly_heat, hourly_cool
-
 
 with st.container():
     st.markdown('---')
@@ -839,7 +912,8 @@ with st.container():
                 'with a different base temperature which is here set as 23°C by default.') 
                 
 
-    degree_days_figure, hourly_heat, hourly_cool = get_degree_days_figure(DD_st_hour,DD_end_hour,global_epw.dry_bulb_temperature, degree_days_heat_base,
+    degree_days_figure, hourly_heat, hourly_cool = get_degree_days_figure(
+        global_epw.dry_bulb_temperature, degree_days_heat_base,
         degree_days_cool_base,global_colorset)
 
     st.plotly_chart(degree_days_figure, use_container_width=True,
@@ -858,6 +932,8 @@ degree_days_figure.write_image("CDD_HDD.png")
 #Distributed DBT Plot
 #------------------------------------------------------------------------------
 import plotly.express as px
+
+
     
 with st.sidebar:
     
@@ -910,7 +986,9 @@ temp_bins_plot.write_image('temp-bins.png')
 
 from docx import Document
 from docx.shared import Inches
-import base64
+
+
+export_as_docs = st.button("Export Report (.docx)")
 
 document = Document()
 
@@ -980,13 +1058,18 @@ document.add_paragraph('Wind roses are graphical charts that characterize the sp
                        ' of winds at a location. Presented in a circular format, the length of each'
                        ' "spoke" around the circle indicates the amount of time that the wind blows'
                        ' from a particular direction. Colors along the spokes indicate categories'
-                       ' of wind speed. Additionally, the second diagram plots the'
-                       ' Dry Bulb Temperature of for each wind direction which is helpful to understand'
-                       ' the possibilities of having natural ventilation with comfortable outdoor temperature.')
+                       ' of wind speed. Additionally, the other diagrams plot the correlation between the wind direction and'
+                       ' Dry Bulb Temperature, Direct/Diffuse Solar Radiation which is helpful to understand'
+                       ' the possibilities of utilizing natural ventilation and shading strategies.')
 
 document.add_picture('windrose.png', width=Inches(4.2), height= Inches(3))
+document.add_paragraph('Figure 6. Wind Direction vs. Dry Bulb Temperature', style='Caption')
 document.add_picture('windrose-temp.png', width=Inches(4.2), height= Inches(3))
-document.add_paragraph('Figure 6. (Top) Wind Rose vs. Wind Direction , (Bottom) Wind Direction vs. Dry Bulb Temperature', style='Caption')
+document.add_paragraph('Figure 7. Wind Rose vs. Wind Direction', style='Caption')
+document.add_picture('windrose-dir.png', width=Inches(4.2), height= Inches(3))
+document.add_paragraph('Figure 8. Wind Rose vs. Direct Solar Radiation', style='Caption')
+document.add_picture('windrose-diff.png', width=Inches(4.2), height= Inches(3))
+document.add_paragraph('Figure 9. Wind Rose vs. Diffuse Solar Radiation', style='Caption')
 
 document.add_paragraph('Sunpath Diagram', style='List Number')
 document.add_paragraph('Solar charts and sun path diagrams have been devised as visual'
@@ -997,7 +1080,7 @@ document.add_paragraph('Solar charts and sun path diagrams have been devised as 
                        ' can help to understand its variation across the sun position.')
 
 document.add_picture('Sunpath.png', width=Inches(4.2), height= Inches(3))
-document.add_paragraph('Figure 7. Sunpath Diagram', style='Caption')
+document.add_paragraph('Figure 10. Sunpath Diagram', style='Caption')
 
 document.add_paragraph('Cooling/Heating Degree Days/Hours', style='List Number')
 document.add_paragraph('Degree days is another way of combining time and temperature, but it has different implications for heating and cooling than does design temperature.'
@@ -1016,7 +1099,7 @@ document.add_paragraph('Degree days is another way of combining time and tempera
                 'with a different base temperature which is typically set as 24°C by default.') 
 document.add_paragraph(f'Following the selected base temperatures, total HEATING HOURS and COOLING HOURS are respetively {round(hourly_heat.total,0)} and {round(hourly_heat.total,0)} in {global_epw.location.city}')
 document.add_picture('CDD_HDD.png', width=Inches(w_res), height= Inches(h_res*1.5))
-document.add_paragraph('Figure 8. Cooling/Heating Degree Days', style='Caption')
+document.add_paragraph('Figure 11. Cooling/Heating Degree Days', style='Caption')
 
 
 document.add_paragraph('Distributed Temperature Plot', style='List Number')
@@ -1029,16 +1112,15 @@ p4.add_run(' respectively')
                        
 
 document.add_picture('temp-bins.png', width=Inches(w_res), height= Inches(h_res*1.5))
-document.add_paragraph('Figure 9. Temperature Ranges', style='Caption')
+document.add_paragraph('Figure 12. Temperature Ranges', style='Caption')
 
-document.save(pathlib.Path(f'WeatherAnalysis-{global_epw.location.city}.docx'))
 
-data = open(f'WeatherAnalysis-{global_epw.location.city}.docx', "rb").read()
-encoded = base64.b64encode(data)
-decoded = base64.b64decode(encoded)
 
-st.download_button('Export Report (.docx)', decoded, f"WeatherAnalysis-{global_epw.location.city}.docx")
-   
-   
+if export_as_docs:
+    filepath = pathlib.Path.home()   
+    document.save(pathlib.Path(filepath,"Downloads", f'WeatherAnalysis-{global_epw.location.city}.docx'))
+
+
 st.markdown('Please note that the generated report will take your inputs as the basis of the weather analysis. Therefore, make sure you have selected the right values/thresholds and proper environmental variables given in the control panel based on your design needs.')
-st.markdown('**ENJOY READING THE REPORT!**')
+st.markdown('**The REPORT is in your DOWNLOADS folder now, ENJOY READING!**')
+
