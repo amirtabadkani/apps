@@ -1,7 +1,7 @@
 streamlit>=1.22.0
 streamlit-vtkjs>=0.3.2
 ladybug-pandas>=0.4.1
-ladybug-charts>=1.18.8
+ladybug-charts
 ladybug-core>=0.41.19
 ladybug-comfort>=0.16.29
 seaborn>=0.11.1
