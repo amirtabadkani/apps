@@ -1,4 +1,4 @@
-streamlit==1.21.0
+streamlit>=1.22.0
 streamlit-vtkjs>=0.3.2
 ladybug-pandas>=0.4.1
 ladybug-charts>=1.18.8
