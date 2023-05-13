@@ -1126,9 +1126,6 @@ p4.add_run(' respectively')
 document.add_picture('temp-bins.png', width=Inches(w_res), height= Inches(h_res*1.5))
 document.add_paragraph('Figure 12. Temperature Ranges', style='Caption')
 
-filepath = pathlib.Path.home() 
-filepath
-
 if export_as_docs:
     filepath = pathlib.Path.home()   
     document.save(pathlib.Path(filepath,"Downloads", f'WeatherAnalysis-{global_epw.location.city}.docx'))
