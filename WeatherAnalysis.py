@@ -853,18 +853,22 @@ with st.sidebar:
 
     
         degree_days_cool_base = st.number_input('Base cooling temperature',
-                                                value=24)
+                                                value=23)
+        
+        dd_st_hour = st.number_input(
+            'Start hour', min_value=0, max_value=23, value=0, key='dd_st_hour')
+        dd_end_hour = st.number_input(
+            'End hour', min_value=0, max_value=23, value=23, key='dd_end_hour')
+        
 @st.cache_data(ttl=2)
-def get_degree_days_figure(
-    _dbt: HourlyContinuousCollection, _heat_base_: int, _cool_base_: int,
+def get_degree_days_figure(_st_hour: int, _end_hour: int,
+    _heat_base_: int, _cool_base_: int,
     global_colorset: str) -> Tuple[Figure,HourlyContinuousCollection,HourlyContinuousCollection]:
     """Create HDD and CDD figure.
     Args:
         dbt: A HourlyContinuousCollection object.
         _heat_base_: A number representing the heat base temperature.
         _cool_base_: A number representing the cool base temperature.
-        stack: A boolean to indicate whether to stack the data.
-        switch: A boolean to indicate whether to reverse the colorset.
         global_colorset: A string representing the name of a Colorset.
     Returns:
         A tuple of three items:
@@ -872,14 +876,17 @@ def get_degree_days_figure(
         -   Heating degree days as a HourlyContinuousCollection.
         -   Cooling degree days as a HourlyContinuousCollection.
     """
-
-    hourly_heat = HourlyContinuousCollection.compute_function_aligned(
-        heating_degree_time, [_dbt, _heat_base_],
+    lb_ap = AnalysisPeriod(1, 1, _st_hour, 12, 31, _end_hour) 
+    
+    filtered_dd = global_epw.dry_bulb_temperature.filter_by_analysis_period(lb_ap)
+    
+    hourly_heat = filtered_dd.compute_function_aligned(
+        heating_degree_time, [filtered_dd, _heat_base_],
         HeatingDegreeTime(), 'degC-hours')
     hourly_heat.convert_to_unit('degC-days')
 
-    hourly_cool = HourlyContinuousCollection.compute_function_aligned(
-        cooling_degree_time, [_dbt, _cool_base_],
+    hourly_cool = filtered_dd.compute_function_aligned(
+        cooling_degree_time, [filtered_dd, _cool_base_],
         CoolingDegreeTime(), 'degC-hours')
     hourly_cool.convert_to_unit('degC-days')
 
@@ -912,9 +919,8 @@ with st.container():
                 'with a different base temperature which is here set as 23°C by default.') 
                 
 
-    degree_days_figure, hourly_heat, hourly_cool = get_degree_days_figure(
-        global_epw.dry_bulb_temperature, degree_days_heat_base,
-        degree_days_cool_base,global_colorset)
+    degree_days_figure, hourly_heat, hourly_cool = get_degree_days_figure(dd_st_hour,dd_end_hour,
+        degree_days_heat_base,degree_days_cool_base,global_colorset)
 
     st.plotly_chart(degree_days_figure, use_container_width=True,
                     config=get_figure_config(
