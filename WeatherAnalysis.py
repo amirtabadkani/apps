@@ -1141,7 +1141,7 @@ document.add_paragraph('Figure 12. Temperature Ranges', style='Caption')
 
 if export_as_docs:
     home_dir = os.path.expanduser( '~' )
-    filepath = os.path.join( home_dir, "Downloads", f'WeatherAnalysis-{global_epw.location.city}.docx') ) 
+    filepath = os.path.join( home_dir, "Downloads", f'WeatherAnalysis-{global_epw.location.city}.docx')
     document.save(filepath)
 
 pathlib.Path()
