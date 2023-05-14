@@ -1,5 +1,5 @@
 streamlit
-ladybug-pandas
+ladybug-charts
 ladybug-core
 ladybug-comfort
 honeybee-vtk
