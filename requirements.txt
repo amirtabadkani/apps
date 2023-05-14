@@ -3,7 +3,6 @@ ladybug-pandas
 ladybug-charts
 ladybug-core
 ladybug-comfort
-seaborn
 plotly
 pandas
 numpy
