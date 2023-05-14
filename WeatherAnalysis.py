@@ -1140,8 +1140,9 @@ document.add_paragraph('Figure 12. Temperature Ranges', style='Caption')
 
 
 if export_as_docs:
-    filepath = pathlib.Path.cwd() 
-    document.save(pathlib.Path.cwd().joinpath("Downloads", f'WeatherAnalysis-{global_epw.location.city}.docx'))
+    home_dir = os.path.expanduser( '~' )
+    filepath = os.path.join( home_dir, "Downloads", f'WeatherAnalysis-{global_epw.location.city}.docx') ) 
+    document.save(filepath)
 
 pathlib.Path()
 st.markdown('Please note that the generated report will take your inputs as the basis of the weather analysis. Therefore, make sure you have selected the right values/thresholds and proper environmental variables given in the control panel based on your design needs.')
