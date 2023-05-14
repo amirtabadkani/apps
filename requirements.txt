@@ -1,5 +1,4 @@
-streamlit
-streamlib
+streamlit==1.21.0
 ladybug-charts
 ladybug-core
 plotly
