@@ -1,1 +1,1 @@
-This web-based application has anlytical functions for weather analysis of a geographical location. 
+This web-based application has analytical functions for weather analysis of a geographical location. 
