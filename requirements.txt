@@ -3,6 +3,8 @@ ladybug-pandas
 ladybug-charts
 ladybug-core
 ladybug-comfort
+honeybee-vtk
+ladybug-vtk
 plotly
 pandas
 numpy
