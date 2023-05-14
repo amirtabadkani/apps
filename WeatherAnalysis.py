@@ -72,7 +72,7 @@ colorsets = {
 # A function to derive the color code when selected in Streamlit
 #------------------------------------------------------------------------------
 
-@st.cache_data(ttl=2)
+@st.cache_resource(ttl=2,show_spinner=False)
 def get_colors(switch: bool, global_colorset: str) -> List[Color]:
     """Get switched colorset if requested.
     Args:
@@ -91,7 +91,7 @@ def get_colors(switch: bool, global_colorset: str) -> List[Color]:
 
 # Define a function to extract the epw variable from the class
 #------------------------------------------------------------------------------
-@st.cache_data(ttl=2)
+@st.cache_resource(ttl=2,show_spinner=False)
 def get_fields() -> dict:
     # A dictionary of EPW variable name to its corresponding field number
     return {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
@@ -183,7 +183,8 @@ with st.sidebar:
             hourly_data_end_hour = None
             
 
-@st.cache_data(ttl=2)
+@st.cache_resource(ttl=2,show_spinner=False)
+
 def get_hourly_data_figure(data_type:str,
         _wea_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
         end_day: int, end_hour: int) -> Figure:
@@ -266,7 +267,8 @@ with st.sidebar:
         threshold_min = st.slider('Minimum {}'.format(hourly_selected), min_value, max_value, value = min_value, step=None)
         threshold_max = st.slider('Maximum {}'.format(hourly_selected), min_value, max_value, value = max_value, step=None)
         
-@st.cache_data(ttl=2)
+@st.cache_resource(ttl=2,show_spinner=False)
+
 def get_hourly_data_figure_conditional(_hourly_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
         end_day: int, end_hour: int) -> Figure:
     """Create heatmap from hourly data.
@@ -383,7 +385,8 @@ with st.sidebar:
             psy_met_value = st.number_input('Metabloic Rate',value=1.1)
             
             
-@st.cache_data(ttl=2)
+@st.cache_resource(ttl=2,show_spinner=False)
+
 def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str,
                          load_data: str, draw_polygons: bool,
                          _data: HourlyContinuousCollection) -> Tuple[Figure, HourlyContinuousCollection, Tuple]:
@@ -521,7 +524,8 @@ def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str
         
         return figure, None, PMV_cal
 
-@st.cache_data(ttl=2)
+@st.cache_resource(ttl=2,show_spinner=False)
+
 def get_figure_config(title: str) -> dict:
     """Set figure config so that a figure can be downloaded as SVG."""
 
@@ -593,7 +597,8 @@ with st.sidebar:
             'End hour', min_value=0, max_value=23, value=23, key='windrose_end_hour')
     
    
-@st.cache_data(ttl=2)
+@st.cache_resource(ttl=2,show_spinner=False)
+
 def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int,
                         end_day: int, end_hour: int, _epw, global_colorset) -> Figure:
     
@@ -623,7 +628,8 @@ def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int
     
     return lb_wind_rose.plot(title='Windrose',show_title=True)
 
-@st.cache_data(ttl=2)
+@st.cache_resource(ttl=2,show_spinner=False)
+
 def get_windrose_figure_temp(st_month: int, st_day: int, st_hour: int, end_month: int,
                     end_day: int, end_hour: int, _epw, global_colorset) -> Figure:
     
@@ -657,7 +663,8 @@ def get_windrose_figure_temp(st_month: int, st_day: int, st_hour: int, end_month
     
     return lb_windrose_temp.plot(title='Wind Direction vs. Dry Bulb Temperature', show_title=True)
  
-@st.cache_data(ttl=2)
+@st.cache_resource(ttl=2,show_spinner=False)
+
 def get_windrose_figure_dir_rad(st_month: int, st_day: int, st_hour: int, end_month: int,
                     end_day: int, end_hour: int, _epw, global_colorset) -> Figure:
     
@@ -691,7 +698,8 @@ def get_windrose_figure_dir_rad(st_month: int, st_day: int, st_hour: int, end_mo
     
     return lb_windrose_dir.plot(title='Wind Direction vs. Direct Normal Radiation', show_title=True)
 
-@st.cache_data(ttl=2)
+@st.cache_resource(ttl=2,show_spinner=False)
+
 def get_windrose_figure_diff_rad(st_month: int, st_day: int, st_hour: int, end_month: int,
                     end_day: int, end_hour: int, _epw, global_colorset) -> Figure:
     
@@ -796,7 +804,8 @@ with st.sidebar:
             sunpath_data = global_epw._get_data_by_field(fields[sunpath_selected])
             sunpath_switch = None
             
-@st.cache_data(ttl=2)
+@st.cache_resource(ttl=2,show_spinner=False)
+
 def get_sunpath_figure(sunpath_type: str, global_colorset: str, _epw: EPW = None,
                        switch: bool = False,
                        _data: HourlyContinuousCollection = None, ) -> Figure:
@@ -860,7 +869,8 @@ with st.sidebar:
         dd_end_hour = st.number_input(
             'End hour', min_value=0, max_value=23, value=23, key='dd_end_hour')
         
-@st.cache_data(ttl=2)
+@st.cache_resource(ttl=2,show_spinner=False)
+
 def get_degree_days_figure(_st_hour: int, _end_hour: int,
     _heat_base_: int, _cool_base_: int,
     global_colorset: str) -> Tuple[Figure,HourlyContinuousCollection,HourlyContinuousCollection]:
@@ -961,7 +971,8 @@ with st.container():
     
     bins = list(np.arange(min_val_bin,max_val_bin,steps))
     
-    @st.cache_data(ttl=2)
+    @st.cache_data(ttl=2,show_spinner=False)
+
     def get_ranges():
         ranges = []
         for i in range(0,(len(bins)-1)):
@@ -1126,11 +1137,14 @@ p4.add_run(' respectively')
 document.add_picture('temp-bins.png', width=Inches(w_res), height= Inches(h_res*1.5))
 document.add_paragraph('Figure 12. Temperature Ranges', style='Caption')
 
+
+
 if export_as_docs:
-    filepath = pathlib.Path.home()   
+    filepath = pathlib.Path.home()  
+    filepath
     document.save(pathlib.Path(filepath,"Downloads", f'WeatherAnalysis-{global_epw.location.city}.docx'))
 
-
+pathlib.Path()
 st.markdown('Please note that the generated report will take your inputs as the basis of the weather analysis. Therefore, make sure you have selected the right values/thresholds and proper environmental variables given in the control panel based on your design needs.')
 st.markdown('**The REPORT is in your DOWNLOADS folder now, ENJOY READING!**')
 
