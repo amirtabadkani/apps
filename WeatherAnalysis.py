@@ -183,74 +183,74 @@ with st.sidebar:
             hourly_data_end_hour = None
             
 
-# @st.cache_resource(ttl=2,show_spinner=False)
+@st.cache_resource(ttl=2,show_spinner=False)
 
-# def get_hourly_data_figure(data_type:str,
-#         _wea_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
-#         end_day: int, end_hour: int) -> Figure:
-#     """Create heatmap from hourly data.
-#     Args:
-#         data: HourlyContinuousCollection object.
-#         global_colorset: A string representing the name of a Colorset.
-#         conditional_statement: A string representing a conditional statement.
-#         min: A string representing the lower bound of the data range.
-#         max: A string representing the upper bound of the data range.
-#         st_month: start month.
-#         st_day: start day.
-#         st_hour: start hour.
-#         end_month: end month.
-#         end_day: end day.
-#         end_hour: end hour.
-#     Returns:
-#         A plotly figure.
-#     """
-#     lb_lp = LegendParameters(colors=colorsets[global_colorset])
+def get_hourly_data_figure(data_type:str,
+        _wea_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
+        end_day: int, end_hour: int) -> Figure:
+    """Create heatmap from hourly data.
+    Args:
+        data: HourlyContinuousCollection object.
+        global_colorset: A string representing the name of a Colorset.
+        conditional_statement: A string representing a conditional statement.
+        min: A string representing the lower bound of the data range.
+        max: A string representing the upper bound of the data range.
+        st_month: start month.
+        st_day: start day.
+        st_hour: start hour.
+        end_month: end month.
+        end_day: end day.
+        end_hour: end hour.
+    Returns:
+        A plotly figure.
+    """
+    lb_lp = LegendParameters(colors=colorsets[global_colorset])
     
-#     lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
+    lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
     
     
-#     colors = colorsets[global_colorset] 
+    colors = colorsets[global_colorset] 
     
-#     if data_type == 'Hourly Plot':
-#         hourly_data = _wea_data.filter_by_analysis_period(lb_ap)
-#         hourly_plot = HourlyPlot(hourly_data, legend_parameters=lb_lp)
+    if data_type == 'Hourly Plot':
+        hourly_data = _wea_data.filter_by_analysis_period(lb_ap)
+        hourly_plot = HourlyPlot(hourly_data, legend_parameters=lb_lp)
         
-#         return hourly_plot.plot(title=str(_wea_data.header.data_type), show_title=True)
+        return hourly_plot.plot(title=str(_wea_data.header.data_type), show_title=True)
     
-#     elif data_type == 'Mean Daily Plot':
-#         return _wea_data.diurnal_average_chart(
-#             title=_wea_data.header.data_type.name, show_title=True,color=colors[-1])
+    elif data_type == 'Mean Daily Plot':
+        return _wea_data.diurnal_average_chart(
+            title=_wea_data.header.data_type.name, show_title=True,color=colors[-1])
     
-#     elif data_type == 'Line Plot':
-#         return _wea_data.line_chart(title=_wea_data.header.data_type.name,show_title=True,color=colors[-1])
+    elif data_type == 'Line Plot':
+        return _wea_data.line_chart(title=_wea_data.header.data_type.name,show_title=True,color=colors[-1])
     
-# Hourly_figure = get_hourly_data_figure(data_plot_radio,data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
-#                 hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
-#                 hourly_data_end_hour)
+Hourly_figure = get_hourly_data_figure(data_plot_radio,data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
+                hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
+                hourly_data_end_hour)
 
-# st.header(f'{global_epw.location.city}, {global_epw.location.country}')
-# st.plotly_chart(Hourly_figure, use_container_width=True)
+st.header(f'{global_epw.location.city}, {global_epw.location.country}')
+st.plotly_chart(Hourly_figure, use_container_width=True)
 
-# #Saving images
+#Saving images
 
-# Hourly_figure_image = get_hourly_data_figure('Hourly Plot',data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
-#                 hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
-#                 hourly_data_end_hour)
-# Daily_figure_image = get_hourly_data_figure('Mean Daily Plot',data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
-#                 hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
-#                 hourly_data_end_hour)
-# Line_figure_image = get_hourly_data_figure('Line Plot',data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
-#                 hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
-#                 hourly_data_end_hour)
+Hourly_figure_image = get_hourly_data_figure('Hourly Plot',data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
+                hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
+                hourly_data_end_hour)
+Daily_figure_image = get_hourly_data_figure('Mean Daily Plot',data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
+                hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
+                hourly_data_end_hour)
+Line_figure_image = get_hourly_data_figure('Line Plot',data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
+                hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
+                hourly_data_end_hour)
 
-# Hourly_figure_image.write_image("hourly_data.png")
-# Daily_figure_image.write_image("Daily_data.png")
-# Line_figure_image.write_image("Line_data.png")
+Hourly_figure_image.write_image("hourly_data.png")
+Daily_figure_image.write_image("Daily_data.png")
+Line_figure_image.write_image("Line_data.png")
 
 
-# #statistics
-# from statistics import mean
-# ave_val = round(mean(_wea_data._values),2)
+#statistics
+from statistics import mean
+ave_val = round(mean(_wea_data._values),2)
 
 
 # CONDITIONAL HOURLY PLOTS
