@@ -1,4 +1,5 @@
 streamlit
+streamlib
 ladybug-charts
 ladybug-core
 plotly
