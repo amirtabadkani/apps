@@ -5,7 +5,6 @@
 
 import pandas as pd
 import numpy as np
-import os
 
 import streamlit as st
 from ladybug.epw import EPW
@@ -72,7 +71,7 @@ colorsets = {
 # A function to derive the color code when selected in Streamlit
 #------------------------------------------------------------------------------
 
-@st.cache_resource(ttl=2,show_spinner=False)
+@st.cache_data(ttl=2)
 def get_colors(switch: bool, global_colorset: str) -> List[Color]:
     """Get switched colorset if requested.
     Args:
@@ -91,7 +90,7 @@ def get_colors(switch: bool, global_colorset: str) -> List[Color]:
 
 # Define a function to extract the epw variable from the class
 #------------------------------------------------------------------------------
-@st.cache_resource(ttl=2,show_spinner=False)
+@st.cache_data(ttl=2)
 def get_fields() -> dict:
     # A dictionary of EPW variable name to its corresponding field number
     return {EPWFields._fields[i]['name'].name: i for i in range(6, 34)}
@@ -113,7 +112,7 @@ with st.sidebar:
         global_epw = EPW(epw_file)
     
     st.markdown('---')
-
+    
 # Global Colorset - Choose the heatmap color
 #------------------------------------------------------------------------------
 
@@ -121,14 +120,9 @@ with st.sidebar:
     with st.expander('Global colorset'):
         global_colorset = st.selectbox('', list(colorsets.keys()))
         
+
 # Hourly Plots
 #------------------------------------------------------------------------------
-st.markdown('---')
-st.write("""
-# Periodic Weather Data Analysis
-         
-***
-""")
 
 with st.sidebar:
     # A dictionary of EPW variable name to its corresponding field number
@@ -183,8 +177,7 @@ with st.sidebar:
             hourly_data_end_hour = None
             
 
-@st.cache_resource(ttl=2,show_spinner=False)
-
+@st.cache_data(ttl=2)
 def get_hourly_data_figure(data_type:str,
         _wea_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
         end_day: int, end_hour: int) -> Figure:
@@ -224,12 +217,44 @@ def get_hourly_data_figure(data_type:str,
     elif data_type == 'Line Plot':
         return _wea_data.line_chart(title=_wea_data.header.data_type.name,show_title=True,color=colors[-1])
     
-Hourly_figure = get_hourly_data_figure(data_plot_radio,data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
-                hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
-                hourly_data_end_hour)
-
-st.header(f'{global_epw.location.city}, {global_epw.location.country}')
-st.plotly_chart(Hourly_figure, use_container_width=True)
+with st.container():
+    Hourly_figure = get_hourly_data_figure(data_plot_radio,data_final,global_colorset, hourly_data_st_month, hourly_data_st_day,
+                    hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
+                    hourly_data_end_hour)
+    
+    st.header('Climate Summary')
+    
+    col1,col2,col3,col4,col5,col6,col7 = st.columns(7)
+    with col1:
+        ""
+    with col2:
+        location = global_epw._location.city
+        st.metric('Location', location)
+    with col3:
+        cz = global_epw.ashrae_climate_zone
+        st.metric('Climate Zone', cz)
+    with col4:
+        ave_dbt = round(global_epw.dry_bulb_temperature.average,2)
+        st.metric('Average yearly temperature', f'{ave_dbt}°C')
+    with col5:
+        h_day = global_epw.annual_heating_design_day_990.analysis_period.end_day
+        h_month = global_epw.annual_heating_design_day_990.analysis_period.end_month
+        st.metric('Heating Design Day (99%)', f'{h_month}/{h_day}')
+    with col6:
+        cdd = global_epw.annual_cooling_design_day_010
+        c_day = global_epw.annual_cooling_design_day_010.analysis_period.end_day
+        c_month = global_epw.annual_cooling_design_day_010.analysis_period.end_month
+        st.metric('Cooling Design Day (1%)', f'{c_month}/{c_day}')
+    with col7:
+        ""
+    st.markdown('---')
+    
+    st.write("""
+    # Periodic Weather Data Analysis
+             
+    ***
+    """)
+    st.plotly_chart(Hourly_figure, use_container_width=True)
 
 #Saving images
 
@@ -267,8 +292,7 @@ with st.sidebar:
         threshold_min = st.slider('Minimum {}'.format(hourly_selected), min_value, max_value, value = min_value, step=None)
         threshold_max = st.slider('Maximum {}'.format(hourly_selected), min_value, max_value, value = max_value, step=None)
         
-@st.cache_resource(ttl=2,show_spinner=False)
-
+@st.cache_data(ttl=2)
 def get_hourly_data_figure_conditional(_hourly_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
         end_day: int, end_hour: int) -> Figure:
     """Create heatmap from hourly data.
@@ -385,8 +409,7 @@ with st.sidebar:
             psy_met_value = st.number_input('Metabloic Rate',value=1.1)
             
             
-@st.cache_resource(ttl=2,show_spinner=False)
-
+@st.cache_data(ttl=2)
 def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str,
                          load_data: str, draw_polygons: bool,
                          _data: HourlyContinuousCollection) -> Tuple[Figure, HourlyContinuousCollection, Tuple]:
@@ -524,8 +547,7 @@ def get_psy_chart_figure(_epw: EPW, global_colorset: str, selected_strategy: str
         
         return figure, None, PMV_cal
 
-@st.cache_resource(ttl=2,show_spinner=False)
-
+@st.cache_data(ttl=2)
 def get_figure_config(title: str) -> dict:
     """Set figure config so that a figure can be downloaded as SVG."""
 
@@ -597,8 +619,7 @@ with st.sidebar:
             'End hour', min_value=0, max_value=23, value=23, key='windrose_end_hour')
     
    
-@st.cache_resource(ttl=2,show_spinner=False)
-
+@st.cache_data(ttl=2)
 def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int,
                         end_day: int, end_hour: int, _epw, global_colorset) -> Figure:
     
@@ -628,8 +649,7 @@ def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int
     
     return lb_wind_rose.plot(title='Windrose',show_title=True)
 
-@st.cache_resource(ttl=2,show_spinner=False)
-
+@st.cache_data(ttl=2)
 def get_windrose_figure_temp(st_month: int, st_day: int, st_hour: int, end_month: int,
                     end_day: int, end_hour: int, _epw, global_colorset) -> Figure:
     
@@ -663,8 +683,7 @@ def get_windrose_figure_temp(st_month: int, st_day: int, st_hour: int, end_month
     
     return lb_windrose_temp.plot(title='Wind Direction vs. Dry Bulb Temperature', show_title=True)
  
-@st.cache_resource(ttl=2,show_spinner=False)
-
+@st.cache_data(ttl=2)
 def get_windrose_figure_dir_rad(st_month: int, st_day: int, st_hour: int, end_month: int,
                     end_day: int, end_hour: int, _epw, global_colorset) -> Figure:
     
@@ -698,8 +717,7 @@ def get_windrose_figure_dir_rad(st_month: int, st_day: int, st_hour: int, end_mo
     
     return lb_windrose_dir.plot(title='Wind Direction vs. Direct Normal Radiation', show_title=True)
 
-@st.cache_resource(ttl=2,show_spinner=False)
-
+@st.cache_data(ttl=2)
 def get_windrose_figure_diff_rad(st_month: int, st_day: int, st_hour: int, end_month: int,
                     end_day: int, end_hour: int, _epw, global_colorset) -> Figure:
     
@@ -804,8 +822,7 @@ with st.sidebar:
             sunpath_data = global_epw._get_data_by_field(fields[sunpath_selected])
             sunpath_switch = None
             
-@st.cache_resource(ttl=2,show_spinner=False)
-
+@st.cache_data(ttl=2)
 def get_sunpath_figure(sunpath_type: str, global_colorset: str, _epw: EPW = None,
                        switch: bool = False,
                        _data: HourlyContinuousCollection = None, ) -> Figure:
@@ -862,23 +879,18 @@ with st.sidebar:
 
     
         degree_days_cool_base = st.number_input('Base cooling temperature',
-                                                value=23)
-        
-        dd_st_hour = st.number_input(
-            'Start hour', min_value=0, max_value=23, value=0, key='dd_st_hour')
-        dd_end_hour = st.number_input(
-            'End hour', min_value=0, max_value=23, value=23, key='dd_end_hour')
-        
-@st.cache_resource(ttl=2,show_spinner=False)
-
-def get_degree_days_figure(_st_hour: int, _end_hour: int,
-    _heat_base_: int, _cool_base_: int,
+                                                value=24)
+@st.cache_data(ttl=2)
+def get_degree_days_figure(
+    _dbt: HourlyContinuousCollection, _heat_base_: int, _cool_base_: int,
     global_colorset: str) -> Tuple[Figure,HourlyContinuousCollection,HourlyContinuousCollection]:
     """Create HDD and CDD figure.
     Args:
         dbt: A HourlyContinuousCollection object.
         _heat_base_: A number representing the heat base temperature.
         _cool_base_: A number representing the cool base temperature.
+        stack: A boolean to indicate whether to stack the data.
+        switch: A boolean to indicate whether to reverse the colorset.
         global_colorset: A string representing the name of a Colorset.
     Returns:
         A tuple of three items:
@@ -886,17 +898,14 @@ def get_degree_days_figure(_st_hour: int, _end_hour: int,
         -   Heating degree days as a HourlyContinuousCollection.
         -   Cooling degree days as a HourlyContinuousCollection.
     """
-    lb_ap = AnalysisPeriod(1, 1, _st_hour, 12, 31, _end_hour) 
-    
-    filtered_dd = global_epw.dry_bulb_temperature.filter_by_analysis_period(lb_ap)
-    
-    hourly_heat = filtered_dd.compute_function_aligned(
-        heating_degree_time, [filtered_dd, _heat_base_],
+
+    hourly_heat = HourlyContinuousCollection.compute_function_aligned(
+        heating_degree_time, [_dbt, _heat_base_],
         HeatingDegreeTime(), 'degC-hours')
     hourly_heat.convert_to_unit('degC-days')
 
-    hourly_cool = filtered_dd.compute_function_aligned(
-        cooling_degree_time, [filtered_dd, _cool_base_],
+    hourly_cool = HourlyContinuousCollection.compute_function_aligned(
+        cooling_degree_time, [_dbt, _cool_base_],
         CoolingDegreeTime(), 'degC-hours')
     hourly_cool.convert_to_unit('degC-days')
 
@@ -929,8 +938,9 @@ with st.container():
                 'with a different base temperature which is here set as 23°C by default.') 
                 
 
-    degree_days_figure, hourly_heat, hourly_cool = get_degree_days_figure(dd_st_hour,dd_end_hour,
-        degree_days_heat_base,degree_days_cool_base,global_colorset)
+    degree_days_figure, hourly_heat, hourly_cool = get_degree_days_figure(
+        global_epw.dry_bulb_temperature, degree_days_heat_base,
+        degree_days_cool_base,global_colorset)
 
     st.plotly_chart(degree_days_figure, use_container_width=True,
                     config=get_figure_config(
@@ -971,8 +981,7 @@ with st.container():
     
     bins = list(np.arange(min_val_bin,max_val_bin,steps))
     
-    @st.cache_data(ttl=2,show_spinner=False)
-
+    @st.cache_data(ttl=2)
     def get_ranges():
         ranges = []
         for i in range(0,(len(bins)-1)):
@@ -1140,11 +1149,10 @@ document.add_paragraph('Figure 12. Temperature Ranges', style='Caption')
 
 
 if export_as_docs:
-    home_dir = os.path.expanduser( '~' )
-    filepath = os.path.join( home_dir, "Downloads", f'WeatherAnalysis-{global_epw.location.city}.docx')
-    document.save(filepath)
+    filepath = pathlib.Path.home()   
+    document.save(pathlib.Path(filepath,"Downloads", f'WeatherAnalysis-{global_epw.location.city}.docx'))
 
-pathlib.Path()
+
 st.markdown('Please note that the generated report will take your inputs as the basis of the weather analysis. Therefore, make sure you have selected the right values/thresholds and proper environmental variables given in the control panel based on your design needs.')
 st.markdown('**The REPORT is in your DOWNLOADS folder now, ENJOY READING!**')
 
