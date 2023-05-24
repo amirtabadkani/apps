@@ -968,6 +968,20 @@ with st.sidebar:
         min_val_bin = st.number_input("Minimum Value", min_value = -20, max_value = 0, value = 0)
         max_val_bin = st.number_input("Maximum Value", min_value = 20, max_value = 60, value = 40)
         steps = st.slider("Number of Steps", min_value = 1, max_value = 5, value = 2)
+        temp_bin_st_month = st.number_input(
+            'Start month', min_value=1, max_value=12, value=1, key='temp_bin_st_month')
+        temp_bin_end_month = st.number_input(
+            'End month', min_value=1, max_value=12, value=12, key='temp_bin_end_month')
+    
+        temp_bin_st_day = st.number_input(
+            'Start day', min_value=1, max_value=31, value=1, key='temp_bin_st_day')
+        temp_bin_end_day = st.number_input(
+            'End day', min_value=1, max_value=31, value=31, key='temp_bin_end_day')
+    
+        temp_bin_st_hour = st.number_input(
+            'Start hour', min_value=0, max_value=23, value=0, key='temp_bin_st_hour')
+        temp_bin_end_hour = st.number_input(
+            'End hour', min_value=0, max_value=23, value=23, key='temp_bin_end_hour')
 
 with st.container():
     
@@ -975,7 +989,11 @@ with st.container():
     st.header('Distributed Temperature Plot')
     st.markdown('---')
     
-    dbt = global_epw.dry_bulb_temperature
+       
+    dbt = global_epw.dry_bulb_temperature.filter_by_analysis_period(AnalysisPeriod(temp_bin_st_month,
+                                                                                   temp_bin_st_day, temp_bin_st_hour,
+                                                                                   temp_bin_end_month, temp_bin_end_day, temp_bin_end_hour))
+    
      
     db_df = pd.DataFrame(list(dbt.values), columns = ['Dry Bulb Temperature'])
     
