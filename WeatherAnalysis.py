@@ -880,8 +880,14 @@ with st.sidebar:
     
         degree_days_cool_base = st.number_input('Base cooling temperature',
                                                 value=24)
+        
+        dd_st_hour = st.number_input(
+            'Start hour', min_value=0, max_value=23, value=0, key='dd_st_hour')
+        dd_end_hour = st.number_input(
+            'End hour', min_value=0, max_value=23, value=23, key='dd_end_hour')
+        
 @st.cache_data(ttl=2)
-def get_degree_days_figure(
+def get_degree_days_figure(_st_hour,_end_hour,
     _dbt: HourlyContinuousCollection, _heat_base_: int, _cool_base_: int,
     global_colorset: str) -> Tuple[Figure,HourlyContinuousCollection,HourlyContinuousCollection]:
     """Create HDD and CDD figure.
@@ -898,14 +904,19 @@ def get_degree_days_figure(
         -   Heating degree days as a HourlyContinuousCollection.
         -   Cooling degree days as a HourlyContinuousCollection.
     """
-
-    hourly_heat = HourlyContinuousCollection.compute_function_aligned(
-        heating_degree_time, [_dbt, _heat_base_],
+    
+    
+    lp_ap = AnalysisPeriod(1,1,_st_hour,12,31,_end_hour)
+    
+    filtered_data = global_epw.dry_bulb_temperature.filter_by_analysis_period(lp_ap)
+    
+    hourly_heat = filtered_data.compute_function_aligned(
+        heating_degree_time, [filtered_data, _heat_base_],
         HeatingDegreeTime(), 'degC-hours')
     hourly_heat.convert_to_unit('degC-days')
 
-    hourly_cool = HourlyContinuousCollection.compute_function_aligned(
-        cooling_degree_time, [_dbt, _cool_base_],
+    hourly_cool = filtered_data.compute_function_aligned(
+        cooling_degree_time, [filtered_data, _cool_base_],
         CoolingDegreeTime(), 'degC-hours')
     hourly_cool.convert_to_unit('degC-days')
 
@@ -938,7 +949,7 @@ with st.container():
                 'with a different base temperature which is here set as 23°C by default.') 
                 
 
-    degree_days_figure, hourly_heat, hourly_cool = get_degree_days_figure(
+    degree_days_figure, hourly_heat, hourly_cool = get_degree_days_figure(dd_st_hour,dd_end_hour,
         global_epw.dry_bulb_temperature, degree_days_heat_base,
         degree_days_cool_base,global_colorset)
 
