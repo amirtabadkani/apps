@@ -963,7 +963,7 @@ import plotly.express as px
     
 with st.sidebar:
     
-    with st.expander('Temperature Range Settings'):
+    with st.expander('Temperature Range'):
     
         min_val_bin = st.number_input("Minimum Value", min_value = -20, max_value = 0, value = 0)
         max_val_bin = st.number_input("Maximum Value", min_value = 20, max_value = 60, value = 40)
