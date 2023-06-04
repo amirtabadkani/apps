@@ -1021,9 +1021,9 @@ with st.container():
     ranges_str = get_ranges()
     
     db_df['Temperature Range'] = pd.cut(db_df['Dry Bulb Temperature'], bins, labels = ranges_str)
-    db_df = db_df.groupby('Temperature Range').count()
+    db_df_grouped = db_df.groupby('Temperature Range').count()
     
-    temp_bins_plot = px.bar(db_df)
+    temp_bins_plot = px.bar(db_df_grouped)
     temp_bins_plot = temp_bins_plot.update_traces(textfont_size=12, textangle=0, textposition="outside", cliponaxis=False)
     
     st.plotly_chart(temp_bins_plot, use_container_width=True)
@@ -1035,6 +1035,57 @@ Minimum_bin = db_df.index[(db_df["Dry Bulb Temperature"].argmin())]
 
 #Saving image
 temp_bins_plot.write_image('temp-bins.png')
+
+#Pair Plots
+#------------------------------------------------------------------------------
+
+with st.sidebar:
+    with st.expander('Monthly Density Pair Plots'):
+
+        variable_selected_01 = st.selectbox(
+                'Select the first environmental variable (X Axis)', options=fields.keys(), key='monthlypair01', index = 2)
+        monthly_variable_01 = global_epw._get_data_by_field(fields[variable_selected_01])
+
+        variable_selected_02 = st.selectbox(
+                'Select the second environmental variable (Y Axis)', options=fields.keys(), key='monthlypair02', index = 0)
+        monthly_variable_02 = global_epw._get_data_by_field(fields[variable_selected_02])
+
+@st.cache_data(ttl=2)
+def get_monthly_dbt():
+    var_monthly_01 = []
+    var_monthly_02 = []
+    for i in range(1,13):
+        var01= monthly_variable_01.group_by_month()[i]
+        var02 = monthly_variable_02.group_by_month()[i]
+        var_monthly_01.append(var01)
+        var_monthly_02.append(var02)
+        dic_vars = {f'{monthly_variable_01._header._data_type}':var_monthly_01, f'{monthly_variable_02._header._data_type}':var_monthly_02}
+        df_monthly = pd.DataFrame(dic_vars)
+    return df_monthly
+
+Monthly_DF = get_monthly_dbt()
+
+months = {0:'January',1:'February', 2:'March',3:'April',4:'May',5:'June',6:'July',7:'August',8:'September',9:'October',10:'November',11:'December'}
+
+with st.container():
+
+    st.markdown('---')
+    st.header('Monthly Density Pair Plots')
+    st.markdown('---')
+
+    cols = st.columns(6)
+    
+    for col, month in zip(range(0,6), range(0,6)):
+        
+        with cols[col]:
+            Pair_01_hp = px.density_heatmap(Monthly_DF, x = Monthly_DF[variable_selected_01][month], y = Monthly_DF[variable_selected_02][month], orientation  = 'v', labels = {'x':variable_selected_01,'y':variable_selected_02}, title = months[month], width = 350)
+            st.plotly_chart(Pair_01_hp)
+    
+    for col, month in zip(range(0,6), range(6,13)):
+        with cols[col]:
+            Pair_02_hp = px.density_heatmap(Monthly_DF, x = Monthly_DF[variable_selected_01][month], y = Monthly_DF[variable_selected_02][month], orientation  = 'v', labels = {'x':variable_selected_01,'y':variable_selected_02},title = months[month], width = 350)
+            st.plotly_chart(Pair_02_hp)
+
 
 #Generate the REPORT in WORD
 #------------------------------------------------------------------------------
@@ -1184,4 +1235,3 @@ if export_as_docs:
 
 st.markdown('Please note that the generated report will take your inputs as the basis of the weather analysis. Therefore, make sure you have selected the right values/thresholds and proper environmental variables given in the control panel based on your design needs.')
 st.markdown('**The REPORT is in your DOWNLOADS folder now, ENJOY READING!**')
-
