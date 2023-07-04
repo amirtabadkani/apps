@@ -224,7 +224,7 @@ with st.container():
     
     st.header('Climate Summary')
     
-    col1,col2,col3,col4,col5,col6,col7 = st.columns(7)
+    col1,col2,col3,col4,col5 = st.columns(5)
     with col1:
         ""
     with col2:
@@ -237,15 +237,6 @@ with st.container():
         ave_dbt = round(global_epw.dry_bulb_temperature.average,2)
         st.metric('Average yearly temperature', f'{ave_dbt}°C')
     with col5:
-        h_day = global_epw.annual_heating_design_day_990.analysis_period.end_day
-        h_month = global_epw.annual_heating_design_day_990.analysis_period.end_month
-        st.metric('Heating Design Day (99%)', f'{h_month}/{h_day}')
-    with col6:
-        cdd = global_epw.annual_cooling_design_day_010
-        c_day = global_epw.annual_cooling_design_day_010.analysis_period.end_day
-        c_month = global_epw.annual_cooling_design_day_010.analysis_period.end_month
-        st.metric('Cooling Design Day (1%)', f'{c_month}/{c_day}')
-    with col7:
         ""
     st.markdown('---')
     
