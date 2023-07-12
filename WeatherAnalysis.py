@@ -1085,8 +1085,6 @@ from docx import Document
 from docx.shared import Inches
 
 
-export_as_docs = st.button("Export Report (.docx)")
-
 document = Document()
 
 x = 2
@@ -1218,10 +1216,14 @@ document.add_picture('temp-bins.png', width=Inches(w_res), height= Inches(h_res*
 document.add_paragraph('Figure 12. Temperature Ranges', style='Caption')
 
 
-
-if export_as_docs:
-    filepath = pathlib.Path.home()   
-    document.save(pathlib.Path(filepath,"Downloads", f'WeatherAnalysis-{global_epw.location.city}.docx'))
+buffer = io.BytesIO()
+document.save(buffer)
+export_as_docs = st.download_button(
+        label="Download file.docx",
+        data=buffer,
+        file_name=f'WeatherAnalysis-{global_epw.location.city}.docx',
+        mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
 
 
 st.markdown('Please note that the generated report will take your inputs as the basis of the weather analysis. Therefore, make sure you have selected the right values/thresholds and proper environmental variables given in the control panel based on your design needs.')
