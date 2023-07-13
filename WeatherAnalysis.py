@@ -25,6 +25,14 @@ st.set_page_config(page_title='EPW Vizualiser Toolkit', layout='wide')
 
 st.subheader('**Download the .epw File from the map**')
 
+hide_st_style = """
+                <style>
+                #MainMenu {visibility: hidden;}
+                footer {visibility: hidden;}
+                </style>
+                """
+st.markdown(hide_st_style, unsafe_allow_html= True)
+
 
 with st.container():
     
