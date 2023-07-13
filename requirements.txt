@@ -5,5 +5,3 @@ plotly
 pandas
 numpy
 python-docx
-pathlib
-IO
