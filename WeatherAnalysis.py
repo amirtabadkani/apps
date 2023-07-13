@@ -1228,4 +1228,4 @@ export_as_docs = st.download_button(
 
 
 st.markdown('Please note that the generated report will take your inputs as the basis of the weather analysis. Therefore, make sure you have selected the right values/thresholds and proper environmental variables given in the control panel based on your design needs.')
-st.markdown('**The REPORT is in your DOWNLOADS folder now, ENJOY READING!**')
+#st.markdown('**The REPORT is in your DOWNLOADS folder now, ENJOY READING!**')
