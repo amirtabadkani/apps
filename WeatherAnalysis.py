@@ -1219,7 +1219,7 @@ document.add_paragraph('Figure 12. Temperature Ranges', style='Caption')
 buffer = io.BytesIO()
 document.save(buffer)
 export_as_docs = st.download_button(
-        label="Download file.docx",
+        label="Download the Report.docx",
         data=buffer,
         file_name=f'WeatherAnalysis-{global_epw.location.city}.docx',
         mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
