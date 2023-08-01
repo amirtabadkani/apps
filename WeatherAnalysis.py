@@ -289,8 +289,8 @@ with st.sidebar:
         min_value = _wea_data.bounds[0]
         max_value = _wea_data.bounds[1]
       
-        threshold_min = st.slider('Minimum {}'.format(hourly_selected), min_value, max_value, value = min_value, step=None)
-        threshold_max = st.slider('Maximum {}'.format(hourly_selected), min_value, max_value, value = max_value, step=None)
+        threshold_min = st.number_input('Minimum {}'.format(hourly_selected), value = min_value, step=None)
+        threshold_max = st.number_input('Maximum {}'.format(hourly_selected), value = max_value, step=None)
         
 @st.cache_data(ttl=2)
 def get_hourly_data_figure_conditional(_hourly_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
@@ -617,7 +617,6 @@ with st.sidebar:
             'Start hour', min_value=0, max_value=23, value=0, key='windrose_st_hour')
         windrose_end_hour = st.number_input(
             'End hour', min_value=0, max_value=23, value=23, key='windrose_end_hour')
-    
    
 @st.cache_data(ttl=2)
 def get_windrose_figure(st_month: int, st_day: int, st_hour: int, end_month: int,
@@ -674,11 +673,11 @@ def get_windrose_figure_temp(st_month: int, st_day: int, st_hour: int, end_month
     windrose_data = global_epw.import_data_by_field(fields['Dry Bulb Temperature'])
     
     wind_dir = _epw.wind_direction.filter_by_analysis_period(lb_ap)
-    windrose_data_ = windrose_data.filter_by_analysis_period(lb_ap)
+    windrose_dbt_ = windrose_data.filter_by_analysis_period(lb_ap)
     
     lb_lp = LegendParameters(colors=colorsets[global_colorset])
     
-    lb_windrose_temp = WindRose(wind_dir,windrose_data_)
+    lb_windrose_temp = WindRose(wind_dir,windrose_dbt_)
     lb_windrose_temp.legend_parameters = lb_lp
     
     return lb_windrose_temp.plot(title='Wind Direction vs. Dry Bulb Temperature', show_title=True)
@@ -743,6 +742,7 @@ def get_windrose_figure_diff_rad(st_month: int, st_day: int, st_hour: int, end_m
     
     wind_dir = _epw.wind_direction.filter_by_analysis_period(lb_ap)
     windrose_data_ = windrose_data.filter_by_analysis_period(lb_ap)
+    
     
     lb_lp = LegendParameters(colors=colorsets[global_colorset])
     
@@ -936,11 +936,11 @@ with st.container():
                 
     st.markdown('**Heating degree days (HDD)** – This is the number that tells you' 
                 'how long a location stays below a special temperature called the base'
-                'temperature. I find it easiest to start with degree hours.'
-                'For example, the most commonly used base temperature for heating is 18°C.'
-                'So if the temperature at your house is 12° F for one hour, you just'
-                'accumulated 6 degree hours. If the temperature is 15°C for the next hour'
-                ',you’ve got another 3 degree hours and 9 degree hours total.'
+                'temperature.'
+                ' For example, the most commonly used base temperature for heating is 18°C.'
+                'So if the temperature at your house is 12°C for one hour, you just'
+                ' accumulated 6 degree hours. If the temperature is 15°C for the next hour'
+                ', you’ve got another 3 degree hours and 9 degree hours total.'
                 'To find the number of degree days, you divide it by 24,'
                 ' so you’ve got one degree day in this example.'
                 'You can do that for every hour of the year to find the total and then divide by 24.'
@@ -1074,13 +1074,14 @@ with st.container():
     st.markdown('---')
 
     cols = st.columns(6)
+    pair_01_save_img = []
     
     for col, month in zip(range(0,6), range(0,6)):
         
         with cols[col]:
             Pair_01_hp = px.density_heatmap(Monthly_DF, x = Monthly_DF[variable_selected_01][month], y = Monthly_DF[variable_selected_02][month], orientation  = 'v', labels = {'x':variable_selected_01,'y':variable_selected_02}, title = months[month], width = 350)
             st.plotly_chart(Pair_01_hp)
-    
+
     for col, month in zip(range(0,6), range(6,13)):
         with cols[col]:
             Pair_02_hp = px.density_heatmap(Monthly_DF, x = Monthly_DF[variable_selected_01][month], y = Monthly_DF[variable_selected_02][month], orientation  = 'v', labels = {'x':variable_selected_01,'y':variable_selected_02},title = months[month], width = 350)
@@ -1093,6 +1094,8 @@ with st.container():
 from docx import Document
 from docx.shared import Inches
 
+
+# export_as_docs = st.button("Export Report (.docx)")
 
 document = Document()
 
@@ -1207,7 +1210,8 @@ document.add_paragraph('Degree days is another way of combining time and tempera
                 ' Or you can use the average temperature for each day to get degree days directly.'
                 'Same principle as for heating degree days applies to Cooling degree days (CDD) but '
                 'with a different base temperature which is typically set as 24°C by default.') 
-document.add_paragraph(f'Following the selected base temperatures, total HEATING HOURS and COOLING HOURS are respetively {round(hourly_heat.total,0)} and {round(hourly_heat.total,0)} in {global_epw.location.city}')
+document.add_paragraph(f'Choosing {degree_days_heat_base}°C and {degree_days_cool_base}°C as heating and cooling base temperatures, respectively, from hour {dd_st_hour}a.m. until {dd_end_hour}p.m.,'
+                       f' the total HEATING HOURS and COOLING HOURS are respetively {round(hourly_heat.total,0)} and {round(hourly_heat.total,0)} in {global_epw.location.city}')
 document.add_picture('CDD_HDD.png', width=Inches(w_res), height= Inches(h_res*1.5))
 document.add_paragraph('Figure 11. Cooling/Heating Degree Days', style='Caption')
 
@@ -1234,6 +1238,5 @@ export_as_docs = st.download_button(
         mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
 
-
 st.markdown('Please note that the generated report will take your inputs as the basis of the weather analysis. Therefore, make sure you have selected the right values/thresholds and proper environmental variables given in the control panel based on your design needs.')
-#st.markdown('**The REPORT is in your DOWNLOADS folder now, ENJOY READING!**')
+# st.markdown('**The REPORT is in your DOWNLOADS folder now, ENJOY READING!**')
