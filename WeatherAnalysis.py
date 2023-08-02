@@ -1080,12 +1080,12 @@ with st.container():
         
         with cols[col]:
             Pair_01_hp = px.density_heatmap(Monthly_DF, x = Monthly_DF[variable_selected_01][month], y = Monthly_DF[variable_selected_02][month], orientation  = 'v', labels = {'x':variable_selected_01,'y':variable_selected_02}, title = months[month], width = 350)
-            st.plotly_chart(Pair_01_hp)
+            st.plotly_chart(Pair_01_hp, use_container_width=True)
 
     for col, month in zip(range(0,6), range(6,13)):
         with cols[col]:
             Pair_02_hp = px.density_heatmap(Monthly_DF, x = Monthly_DF[variable_selected_01][month], y = Monthly_DF[variable_selected_02][month], orientation  = 'v', labels = {'x':variable_selected_01,'y':variable_selected_02},title = months[month], width = 350)
-            st.plotly_chart(Pair_02_hp)
+            st.plotly_chart(Pair_02_hp, use_container_width=True)
 
 
 #Generate the REPORT in WORD
