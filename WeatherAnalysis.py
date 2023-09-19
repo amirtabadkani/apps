@@ -42,6 +42,7 @@ with st.container():
 with st.sidebar:
     st.header('__EPW Visualiser Toolkit__')
     st.markdown('_Reach out to **Amir Tabadkani** for further questions or requesting additional features_')
+    st.markdown('_**amir.tabadkani@stantec.com**_')
     # st.write('Source codes: Ladybug Tools Core SDK Documentation')
 #st.sidebar.image('https://www.ceros.com/wp-content/uploads/2019/04/Stantec_Logo.png',use_column_width='auto',output_format='PNG')
 
