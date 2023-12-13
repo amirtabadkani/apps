@@ -121,8 +121,6 @@ with st.sidebar:
 
         global_epw = EPW(epw_file)
     
-    data_unit = st.radio("Choose the Unit for Analysis:", options= ['SI','IP'], key = 'units')
-
     st.markdown('---')
     
 # Global Colorset - Choose the heatmap color
@@ -144,11 +142,6 @@ with st.sidebar:
     with st.expander('Periodic analysis'):
         hourly_selected = st.selectbox('Which variable to plot?',options=fields.keys())
         _wea_data = global_epw.import_data_by_field(fields[hourly_selected])
-        
-        if data_unit == 'SI':
-            _wea_data = _wea_data
-        elif data_unit == 'IP':
-            _wea_data = _wea_data.to_ip()
         
         var_unit = _wea_data.header._unit
                   
