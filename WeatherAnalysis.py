@@ -121,6 +121,8 @@ with st.sidebar:
 
         global_epw = EPW(epw_file)
     
+    data_unit = st.radio("Choose the Unit for Analysis:", options= ['SI','IP'], key = 'units')
+
     st.markdown('---')
     
 # Global Colorset - Choose the heatmap color
@@ -131,16 +133,23 @@ with st.sidebar:
         global_colorset = st.selectbox('', list(colorsets.keys()))
         
 
-# Hourly Plots
+# PeriodicAnalysis
 #------------------------------------------------------------------------------
 
 with st.sidebar:
     # A dictionary of EPW variable name to its corresponding field number
     
     fields = get_fields()
+    
     with st.expander('Periodic analysis'):
         hourly_selected = st.selectbox('Which variable to plot?',options=fields.keys())
         _wea_data = global_epw.import_data_by_field(fields[hourly_selected])
+        
+        if data_unit == 'SI':
+            _wea_data = _wea_data
+        elif data_unit == 'IP':
+            _wea_data = _wea_data.to_ip()
+        
         var_unit = _wea_data.header._unit
                   
         data_plot_radio = st.radio('How to plot the data?', ['Hourly Plot','Mean Daily Plot', 'Line Plot'], index =0, key='data_plot')
@@ -245,7 +254,7 @@ with st.container():
         st.metric('Climate Zone', cz)
     with col4:
         ave_dbt = round(global_epw.dry_bulb_temperature.average,2)
-        st.metric('Average yearly temperature', f'{ave_dbt}°C')
+        st.metric('Average yearly temperature', f'{ave_dbt}{var_unit}')
     with col5:
         ""
     st.markdown('---')
