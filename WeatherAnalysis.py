@@ -19,9 +19,7 @@ from ladybug.epw import EPWFields
 from ladybug.color import Colorset, Color
 from ladybug.legend import LegendParameters
 from ladybug.hourlyplot import HourlyPlot
-from ladybug.monthlychart import MonthlyChart
 from ladybug.analysisperiod import AnalysisPeriod
-from ladybug.header import Header
 
 
 st.set_page_config(page_title='EPW Vizualiser Toolkit', layout='wide')
@@ -121,7 +119,7 @@ with st.sidebar:
             epw_file.write_bytes(epw_data.read())
         else:
             epw_file = './assets/sample.epw'
-
+            # epw_file = './app/assets/sample.epw' 
         global_epw = EPW(epw_file)
     
     data_unit = st.radio("Metric:", options= ['SI','IP'], key = 'units',horizontal = True)
@@ -392,12 +390,12 @@ def get_hourly_data_figure_conditional(_hourly_data: HourlyContinuousCollection,
     
     lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
     
-    _hourly_data = _wea_data.filter_by_analysis_period(lb_ap)
+    filtered_hourly_data = _hourly_data.filter_by_analysis_period(lb_ap)
 
            
-    hourly_plot = HourlyPlot(_hourly_data, legend_parameters=lb_lp)
+    hourly_plot = HourlyPlot(filtered_hourly_data, legend_parameters=lb_lp)
 
-    return hourly_plot.plot(title=str(_hourly_data.header.data_type), show_title=True)
+    return hourly_plot.plot(title=str(filtered_hourly_data.header.data_type), show_title=True)
 
 st.subheader('_Applied Thresholds_')
 st.markdown('Please choose the thresholds from the min/max sliders on the left to plot the filtered data below:')
