@@ -11,15 +11,19 @@ import streamlit as st
 from ladybug.epw import EPW
 import pathlib
 import plotly.graph_objects as go
+import ladybug_comfort.ts as ts
 from plotly.graph_objects import Figure
 from typing import List, Tuple
 
 from ladybug.datacollection import HourlyContinuousCollection
 from ladybug.epw import EPWFields
+from ladybug.header import Header
 from ladybug.color import Colorset, Color
 from ladybug.legend import LegendParameters
 from ladybug.hourlyplot import HourlyPlot
 from ladybug.analysisperiod import AnalysisPeriod
+import ladybug_comfort.chart.adaptive as adaptivechart
+import ladybug_comfort.collection.adaptive as adaptivecollection
 
 
 st.set_page_config(page_title='EPW Vizualiser Toolkit', layout='wide')
@@ -125,7 +129,8 @@ with st.sidebar:
     data_unit = st.radio("Metric:", options= ['SI','IP'], key = 'units',horizontal = True)
 
     st.markdown('---')
-    
+
+
 # Global Colorset - Choose the heatmap color
 #------------------------------------------------------------------------------
 
@@ -423,6 +428,80 @@ with st.container():
 
 Hourly_conditional_figure.write_image("conditional_hourly_data.png")
    
+st.markdown('---')
+
+
+st.write("""
+# Thermal Sensation
+         
+***
+""")
+
+# Thermal Sensation
+#------------------------------------------------------------------------------
+
+def get_ts_figure(
+        _epw: EPW, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
+        end_day: int, end_hour: int) -> Figure:
+    
+    lb_lp = LegendParameters(colors=colorsets[global_colorset], title = 'TS Catergory', )
+    
+    lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
+
+    colors = colorsets[global_colorset] 
+
+    
+    ts_ta = _epw.dry_bulb_temperature.filter_by_analysis_period(lb_ap) 
+
+    ts_vel = _epw.wind_speed.filter_by_analysis_period(lb_ap)
+
+    ts_rh = _epw.relative_humidity.filter_by_analysis_period(lb_ap)
+
+    ts_sr = _epw.global_horizontal_radiation.filter_by_analysis_period(lb_ap)
+    ts_data = []
+    for i in range(len(ts_sr.values)):
+        ts_data.append(ts.thermal_sensation_effect_category(ts.thermal_sensation(ts_ta.values[i], ts_vel.values[i], ts_rh.values[i], ts_sr.values[i], 20)))
+    
+    ts_header = Header.from_dict({"data_type": {"name":"Thermal Sensation", "data_type": "ThermalConditionSevenPoint","type":"DataType"},  "unit": "condition", "analysis_period": {
+        "st_month":st_month,"st_day":st_day,"st_hour":st_hour,"end_month":end_month,"end_day":end_day,"end_hour":end_hour,"timestep":1,
+    },  "metadata": {}})
+
+    ts_data = HourlyContinuousCollection(ts_header,ts_data)
+
+    ts_plot = HourlyPlot(ts_data, legend_parameters=lb_lp)
+    
+    return ts_plot.plot(title='Thermal Sensation', show_title=True)
+    
+    
+with st.container():
+    TS_figure = get_ts_figure(global_epw,global_colorset, hourly_data_st_month, hourly_data_st_day,
+                    hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
+                    hourly_data_end_hour)
+
+    
+
+    st.plotly_chart(TS_figure, use_container_width=True)
+
+cols = st.columns(9)
+with cols[0]:
+    ""
+with cols[1]:
+    st.metric(":blue[**Very Cold**]", -3)
+with cols[2]:
+    st.metric(":blue[**Quite Cold**]", -2)
+with cols[3]:
+    st.metric(":blue[**Cold**]", -1)
+with cols[4]:
+    st.metric("**Comfort**", 0)
+with cols[5]:
+    st.metric(":red[**Hot**]", 1)
+with cols[6]:
+    st.metric(":red[**Quite Hot**]", 2)
+with cols[7]:
+    st.metric(":red[**Very Hot**]", 3)
+with cols[8]:
+    ""
+
 st.markdown('---')
 
 #Pyschometric Chart
