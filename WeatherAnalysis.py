@@ -22,8 +22,6 @@ from ladybug.color import Colorset, Color
 from ladybug.legend import LegendParameters
 from ladybug.hourlyplot import HourlyPlot
 from ladybug.analysisperiod import AnalysisPeriod
-import ladybug_comfort.chart.adaptive as adaptivechart
-import ladybug_comfort.collection.adaptive as adaptivecollection
 
 
 st.set_page_config(page_title='EPW Vizualiser Toolkit', layout='wide')
