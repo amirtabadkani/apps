@@ -1,7 +1,7 @@
-streamlit
+streamlit==1.30.0
 ladybug-charts
 ladybug-core
 plotly
-pandas==2.0.3
+pandas
 numpy
 python-docx
