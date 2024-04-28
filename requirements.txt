@@ -2,6 +2,6 @@ streamlit
 ladybug-charts
 ladybug-core
 plotly
-pandas
+pandas==2.0.3
 numpy
 python-docx
