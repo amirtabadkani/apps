@@ -3,3 +3,5 @@ ladybug-charts
 ladybug-core
 python-docx
 ladybug-pandas
+pandas
+numpy
