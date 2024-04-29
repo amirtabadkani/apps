@@ -3,6 +3,3 @@ ladybug-charts
 ladybug-core
 python-docx
 ladybug-pandas
-pollination-streamlit
-icrawler
-streamlit-vtkjs
