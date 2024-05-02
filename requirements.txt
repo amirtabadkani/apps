@@ -1,7 +1,8 @@
-streamlit == 1.24.0
+streamlit
 ladybug-charts
 ladybug-core
-python-docx
-ladybug-pandas
+plotly
 pandas
 numpy
+python-docx
+pathlib
