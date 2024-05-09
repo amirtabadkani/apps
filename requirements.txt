@@ -6,4 +6,3 @@ pandas
 numpy
 python-docx
 pathlib
-python == 3.7.0
