@@ -2,7 +2,5 @@ streamlit == 1.30.0
 ladybug-charts
 ladybug-core
 plotly
-pandas
-numpy
 python-docx
 pathlib
