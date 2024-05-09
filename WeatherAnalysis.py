@@ -39,9 +39,9 @@ hide_st_style = """
 st.markdown(hide_st_style, unsafe_allow_html= True)
 
 
-#with st.container():
+with st.container():
     
-    #st.components.iframe("https://www.ladybug.tools/epwmap/", height = 800)
+    st.components.iframe("https://www.ladybug.tools/epwmap/", height = 800)
 
 
 with st.sidebar:
