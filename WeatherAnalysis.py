@@ -23,6 +23,8 @@ from ladybug.legend import LegendParameters
 from ladybug.hourlyplot import HourlyPlot
 from ladybug.analysisperiod import AnalysisPeriod
 
+import streamlit.components.v1 as components
+
 
 st.set_page_config(page_title='EPW Vizualiser Toolkit', layout='wide')
 
@@ -39,7 +41,7 @@ st.markdown(hide_st_style, unsafe_allow_html= True)
 
 with st.container():
     
-    st.components.v1.iframe("https://www.ladybug.tools/epwmap/", height = 800)
+    st.components.iframe("https://www.ladybug.tools/epwmap/", height = 800)
 
 
 with st.sidebar:
