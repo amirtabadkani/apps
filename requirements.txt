@@ -1,6 +1,7 @@
-streamlit == 1.30.0
+streamlit
 ladybug-charts
 ladybug-core
 plotly
 python-docx
 pathlib
+ladybug_comfort
