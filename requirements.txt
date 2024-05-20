@@ -3,4 +3,4 @@ ladybug-core
 plotly
 python-docx
 pathlib
-ladybug-comfort
+ladybug-charts
