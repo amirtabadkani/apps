@@ -4,3 +4,4 @@ plotly
 python-docx
 pathlib
 ladybug-charts
+pandas==2.0.3
