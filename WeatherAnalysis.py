@@ -23,7 +23,6 @@ from ladybug.legend import LegendParameters
 from ladybug.hourlyplot import HourlyPlot
 from ladybug.analysisperiod import AnalysisPeriod
 
-import streamlit.components.v1 as components
 
 
 st.set_page_config(page_title='EPW Vizualiser Toolkit', layout='wide')
@@ -41,13 +40,13 @@ st.markdown(hide_st_style, unsafe_allow_html= True)
 
 with st.container():
     
-    components.iframe("https://www.ladybug.tools/epwmap/", height = 800)
+    st.components.v1.iframe("https://www.ladybug.tools/epwmap/", height = 800)
 
 
 with st.sidebar:
     st.header('__EPW Visualiser Toolkit__')
-    st.markdown('_Reach out to **Amir Tabadkani** for further questions or requesting additional features_')
-    st.markdown('_**amir.tabadkani@stantec.com**_')
+    # st.markdown('_Reach out to **Amir Tabadkani** for further questions or requesting additional features_')
+    # st.markdown('_**amir.tabadkani@stantec.com**_')
     # st.write('Source codes: Ladybug Tools Core SDK Documentation')
 #st.sidebar.image('https://www.ceros.com/wp-content/uploads/2019/04/Stantec_Logo.png',use_column_width='auto',output_format='PNG')
 
@@ -137,7 +136,6 @@ with st.sidebar:
 with st.sidebar:
     with st.expander('Global colorset'):
         global_colorset = st.selectbox('', list(colorsets.keys()))
-
 
 # Converting to IP
 #------------------------------------------------------------------------------
@@ -261,7 +259,15 @@ with st.sidebar:
             hourly_data_st_hour = None
             hourly_data_end_hour = None
 
+        st.subheader('Conditional Analysis')
+    
+        st.markdown(':red[**Min/Max Thresholds**]')
 
+        min_value = _wea_data.bounds[0]
+        max_value = _wea_data.bounds[1]
+      
+        threshold_min = st.number_input('Minimum {}'.format(hourly_selected), value = min_value, step=None)
+        threshold_max = st.number_input('Maximum {}'.format(hourly_selected), value = max_value, step=None)
 
 # @st.cache_data(ttl=2)
 def get_hourly_data_figure(data_type:str,
@@ -361,16 +367,6 @@ ave_val = round(mean(_wea_data._values),2)
 # CONDITIONAL HOURLY PLOTS
 #------------------------------------------------------------------------------
 
-with st.sidebar: 
-    with st.expander('Conditional statement'):
-    
-        st.markdown(':red[**Min/Max Thresholds**]')
-
-        min_value = _wea_data.bounds[0]
-        max_value = _wea_data.bounds[1]
-      
-        threshold_min = st.number_input('Minimum {}'.format(hourly_selected), value = min_value, step=None)
-        threshold_max = st.number_input('Maximum {}'.format(hourly_selected), value = max_value, step=None)
         
 @st.cache_data(ttl=2)
 def get_hourly_data_figure_conditional(_hourly_data: HourlyContinuousCollection, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
@@ -440,45 +436,52 @@ st.write("""
 # Thermal Sensation
 #------------------------------------------------------------------------------
 
-def get_ts_figure(
-        _epw: EPW, global_colorset: str,st_month: int, st_day: int, st_hour: int, end_month: int,
-        end_day: int, end_hour: int) -> Figure:
+def get_ts(
+        _epw: EPW, global_colorset: str) -> Figure:
     
     lb_lp = LegendParameters(colors=colorsets[global_colorset], title = 'TS Catergory', )
     
-    lb_ap = AnalysisPeriod(st_month, st_day, st_hour, end_month, end_day, end_hour)
 
-    colors = colorsets[global_colorset] 
+    ts_ta = _epw.dry_bulb_temperature
 
+    ts_vel = _epw.wind_speed
     
-    ts_ta = _epw.dry_bulb_temperature.filter_by_analysis_period(lb_ap) 
+    ts_rh = _epw.relative_humidity
 
-    ts_vel = _epw.wind_speed.filter_by_analysis_period(lb_ap)
+    ts_sr = _epw.global_horizontal_radiation
 
-    ts_rh = _epw.relative_humidity.filter_by_analysis_period(lb_ap)
-
-    ts_sr = _epw.global_horizontal_radiation.filter_by_analysis_period(lb_ap)
     ts_data = []
-    for i in range(len(ts_sr.values)):
-        ts_data.append(ts.thermal_sensation_effect_category(ts.thermal_sensation(ts_ta.values[i], ts_vel.values[i], ts_rh.values[i], ts_sr.values[i], 20)))
     
-    ts_header = Header.from_dict({"data_type": {"name":"Thermal Sensation", "data_type": "ThermalConditionSevenPoint","type":"DataType"},  "unit": "condition", "analysis_period": {
-        "st_month":st_month,"st_day":st_day,"st_hour":st_hour,"end_month":end_month,"end_day":end_day,"end_hour":end_hour,"timestep":1,
+    condition_data = {'comfort': [],'hot': [],'quitehot':[],  'veryhot': [],
+                    'cold': [], 'quitecold':[],'verycold':[]}
+
+
+    for i in range(len(ts_sr.values)):
+        ts_ = ts.thermal_sensation_effect_category(ts.thermal_sensation(ts_ta.values[i], ts_vel.values[i], ts_rh.values[i], ts_sr.values[i], 20))
+        ts_data.append(ts_)
+
+    condition_data['comfort'] = round((ts_data.count(0)/8760)*100,2)
+    condition_data['hot'] = round((ts_data.count(1)/8760)*100,2)
+    condition_data['quitehot'] = round((ts_data.count(2)/8760)*100,2)
+    condition_data['veryhot'] = round((ts_data.count(3)/8760)*100,2)
+    condition_data['cold'] = round((ts_data.count(-1)/8760)*100,2)
+    condition_data['quitecold'] = round((ts_data.count(-2)/8760)*100,2)
+    condition_data['verycold'] = round((ts_data.count(-3)/8760)*100,2)
+    
+
+    ts_header = Header.from_dict({"data_type": {"name":"Thermal Sensation", "data_type": 'ThermalConditionSevenPoint',"type":'DataType'},  "unit": "condition", "analysis_period": {
+        "st_month":1,"st_day":1,"st_hour":0,"end_month":12,"end_day":31,"end_hour":23,"timestep":1,
     },  "metadata": {}})
 
     ts_data = HourlyContinuousCollection(ts_header,ts_data)
-
+    
     ts_plot = HourlyPlot(ts_data, legend_parameters=lb_lp)
     
-    return ts_plot.plot(title='Thermal Sensation', show_title=True)
+    return ts_plot.plot(title='Thermal Sensation', show_title=True),condition_data
     
     
 with st.container():
-    TS_figure = get_ts_figure(global_epw,global_colorset, hourly_data_st_month, hourly_data_st_day,
-                    hourly_data_st_hour, hourly_data_end_month, hourly_data_end_day,
-                    hourly_data_end_hour)
-
-    
+    TS_figure = get_ts(global_epw,global_colorset)[0]
 
     st.plotly_chart(TS_figure, use_container_width=True)
 
@@ -486,19 +489,26 @@ cols = st.columns(9)
 with cols[0]:
     ""
 with cols[1]:
-    st.metric(":blue[**Very Cold**]", -3)
+    status = get_ts(global_epw,global_colorset)[1]['verycold']
+    st.metric(":blue[**Very Cold [-3]**]", f'{status}%')
 with cols[2]:
-    st.metric(":blue[**Quite Cold**]", -2)
+    status = get_ts(global_epw,global_colorset)[1]['quitecold']
+    st.metric(":blue[**Quite Cold**]", f'{status}%')
 with cols[3]:
-    st.metric(":blue[**Cold**]", -1)
+    status = get_ts(global_epw,global_colorset)[1]['verycold']
+    st.metric(":blue[**Cold**]", f'{status}%')
 with cols[4]:
-    st.metric("**Comfort**", 0)
+    status = get_ts(global_epw,global_colorset)[1]['comfort']
+    st.metric("[**Comfort**]", f'{status}%')
 with cols[5]:
-    st.metric(":red[**Hot**]", 1)
+    status = get_ts(global_epw,global_colorset)[1]['hot']
+    st.metric(":red[**Hot**]", f'{status}%')
 with cols[6]:
-    st.metric(":red[**Quite Hot**]", 2)
+    status = get_ts(global_epw,global_colorset)[1]['quitehot']
+    st.metric(":red[**Quite Hot**]", f'{status}%')
 with cols[7]:
-    st.metric(":red[**Very Hot**]", 3)
+    status = get_ts(global_epw,global_colorset)[1]['veryhot']
+    st.metric(":red[**Very Hot**]", f'{status}%')
 with cols[8]:
     ""
 
